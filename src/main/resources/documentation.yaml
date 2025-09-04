@@ -1,0 +1,1562 @@
+openapi: 3.0.3
+info:
+  title: API Alojamientos (OpenAPI)
+  version: "1.0.0"
+  description: |
+    API RESTful para la aplicación de alojamientos. Implementa autenticación JWT,
+    gestión de usuarios/anfitriones, alojamientos, reservas, búsquedas, favoritos,
+    comentarios/calificaciones, subida de imágenes (servicio externo), notificaciones
+    y endpoints administrativos. Todas las rutas sensibles requieren Bearer token.
+servers:
+  - url: https://api.ejemplo.com
+    description: Producción
+  - url: http://localhost:8000
+    description: Desarrollo local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    pageParam:
+      name: page
+      in: query
+      description: Número de página (0-based)
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    sizeParam:
+      name: size
+      in: query
+      description: Tamaño de página
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    sortParam:
+      name: sort
+      in: query
+      description: "Campo de ordenamiento (ej: price, createdAt). Prefijo - para descendente."
+      required: false
+      schema:
+        type: string
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "Error de validación: el campo email es obligatorio"
+        details:
+          type: object
+          description: Información adicional (opcional)
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [USER, HOST, ADMIN]
+        avatarUrl:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, email, role, enabled, createdAt]
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [USER, HOST]
+        phone:
+          type: string
+      required: [email, password, name, role]
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Tiempo en segundos hasta expiración
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required: [email]
+    PasswordChangeRequest:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+      required: [currentPassword, newPassword]
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        bio:
+          type: string
+    HostProfile:
+      type: object
+      properties:
+        hostId:
+          type: string
+        documentUrl:
+          type: string
+          format: uri
+        verified:
+          type: boolean
+        businessName:
+          type: string
+    City:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        country:
+          type: string
+    Accommodation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hostId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        city:
+          $ref: '#/components/schemas/City'
+        address:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        pricePerNight:
+          type: number
+          format: float
+        services:
+          type: array
+          items:
+            type: string
+          description: Lista de servicios (wifi, parking, piscina...)
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        maxGuests:
+          type: integer
+        active:
+          type: boolean
+        softDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+      required: [id, hostId, title, city, pricePerNight, maxGuests, active]
+    AccommodationCreate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        cityId: { type: string }
+        address: { type: string }
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        pricePerNight: { type: number }
+        services:
+          type: array
+          items: { type: string }
+        maxGuests: { type: integer }
+      required: [title, cityId, pricePerNight, maxGuests]
+    AccommodationUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        address: { type: string }
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        pricePerNight: { type: number }
+        services:
+          type: array
+          items: { type: string }
+        maxGuests: { type: integer }
+        active: { type: boolean }
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+        accommodationId:
+          type: string
+        userId:
+          type: string
+        hostId:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        nights:
+          type: integer
+        totalPrice:
+          type: number
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, REJECTED, CANCELLED]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, accommodationId, userId, startDate, endDate, status]
+    ReservationCreate:
+      type: object
+      properties:
+        accommodationId:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+        guests:
+          type: integer
+      required: [accommodationId, startDate, endDate, guests]
+    AvailabilityResponse:
+      type: object
+      properties:
+        accommodationId:
+          type: string
+        available:
+          type: boolean
+        blockedDates:
+          type: array
+          items:
+            type: string
+            format: date
+    Comment:
+      type: object
+      properties:
+        id: { type: string }
+        accommodationId: { type: string }
+        userId: { type: string }
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text: { type: string }
+        reply:
+          type: object
+          properties:
+            hostId: { type: string }
+            text: { type: string }
+            createdAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    CommentCreate:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+      required: [rating, text]
+    Favorite:
+      type: object
+      properties:
+        userId: { type: string }
+        accommodationId: { type: string }
+        createdAt: { type: string, format: date-time }
+    Paginated:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+        totalPages:
+          type: integer
+    Notification:
+      type: object
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        title: { type: string }
+        body: { type: string }
+        read: { type: boolean }
+        metadata:
+          type: object
+        createdAt: { type: string, format: date-time }
+
+paths:
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registro de usuario
+      description: Registro público de visitantes como USER o HOST. Valida email único.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        "201":
+          description: Usuario creado y token devuelto.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AuthResponse'
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        "400":
+          description: Petición inválida (validación).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflicto (email ya registrado).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Error del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Inicio de sesión con JWT
+      description: Devuelve token JWT (accessToken) y expiresIn.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: Login correcto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        "400":
+          description: Petición inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Credenciales inválidas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "423":
+          description: Cuenta bloqueada (opcional).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicitar recuperación de contraseña
+      description: Envía email con token de restablecimiento (si existe el email).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        "200":
+          description: Email enviado (respuesta genérica).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Si existe la cuenta, se ha enviado un email con instrucciones."
+        "400":
+          description: Petición inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Restablecer contraseña con token
+      description: Restablece contraseña usando token recibido por email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+              required: [token, newPassword]
+      responses:
+        "200":
+          description: Contraseña actualizada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        "400":
+          description: Token inválido o expirado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Obtener perfil de usuario
+      description: Devuelve perfil público/privado según rol y permisos.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Perfil de usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Usuario no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Users]
+      summary: Actualizar perfil de usuario
+      description: Edita campos permitidos del perfil. Solo el propio usuario o ADMIN.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        "200":
+          description: Perfil actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "400":
+          description: Validación inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Acceso prohibido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{userId}/password:
+    patch:
+      tags: [Users]
+      summary: Cambiar contraseña (autenticado)
+      description: Requiere currentPassword y newPassword.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        "204":
+          description: Contraseña cambiada.
+        "400":
+          description: Datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Contraseña actual incorrecta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hosts/{hostId}/profile:
+    put:
+      tags: [Hosts]
+      summary: Editar perfil de anfitrión / subir documentos
+      description: Perfil del host (documentosUrl, verification...). Subir documentos se realiza vía /uploads (ver más abajo).
+      parameters:
+        - name: hostId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HostProfile'
+      responses:
+        "200":
+          description: Perfil de anfitrión actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HostProfile'
+        "401":
+          description: No autorizado.
+        "403":
+          description: Prohibido.
+        "404":
+          description: Host no encontrado.
+
+  /accommodations:
+    post:
+      tags: [Accommodations]
+      summary: Crear alojamiento (host)
+      description: Host autenticado crea un alojamiento.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccommodationCreate'
+      responses:
+        "201":
+          description: Alojamiento creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accommodation'
+        "400":
+          description: Datos inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autorizado.
+        "403":
+          description: Usuario no es host o no verificado.
+        "409":
+          description: Conflicto (duplicidad)
+    get:
+      tags: [Accommodations]
+      summary: Listar alojamientos (filtro global / búsqueda)
+      description: |
+        Listado público de alojamientos. Soporta filtros por ciudad, fechas, precio, servicios,
+        paginación y ordenamiento. Implementa rate limiting (servidor).
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+        - $ref: '#/components/parameters/sortParam'
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: q
+          in: query
+          description: Búsqueda por texto (titulo, descripción)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista paginada de alojamientos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "400":
+          description: Parámetros inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          description: Too Many Requests (rate limit).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "500":
+          description: Error servidor.
+
+  /accommodations/{id}:
+    get:
+      tags: [Accommodations]
+      summary: Obtener detalle de alojamiento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detalle del alojamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accommodation'
+        "404":
+          description: No existe el alojamiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Accommodations]
+      summary: Editar alojamiento (host)
+      description: Sólo el host propietario o admin puede editar.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccommodationUpdate'
+      responses:
+        "200":
+          description: Alojamiento actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accommodation'
+        "400":
+          description: Validación inválida.
+        "401":
+          description: No autenticado.
+        "403":
+          description: No es propietario.
+        "404":
+          description: No encontrado.
+    delete:
+      tags: [Accommodations]
+      summary: Eliminar alojamiento (soft delete)
+      description: "Soft delete: marca softDeleted=true. Sólo host/ADMIN."
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Eliminado (soft delete).
+        "401":
+          description: No autenticado.
+        "403":
+          description: No autorizado.
+        "404":
+          description: No encontrado.
+
+  /hosts/{hostId}/accommodations:
+    get:
+      tags: [Hosts]
+      summary: Listar alojamientos de un anfitrión
+      parameters:
+        - name: hostId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista paginada del host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "401":
+          description: No autorizado.
+        "403":
+          description: Prohibido.
+
+  /accommodations/{id}/images:
+    post:
+      tags: [Accommodations, Images]
+      summary: Subir imagen para alojamiento (servicio externo)
+      description: |
+        Endpoint que recibe multipart/form-data y delega subida a servicio externo (S3/Cloud).
+        Devuelve URLs públicas. Requiere autenticación del host.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                isPrimary:
+                  type: boolean
+      responses:
+        "201":
+          description: Imagen subida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Image'
+        "400":
+          description: Archivo inválido.
+        "401":
+          description: No autenticado.
+        "403":
+          description: No autorizado.
+        "415":
+          description: Unsupported Media Type.
+
+  /accommodations/{id}/availability:
+    get:
+      tags: [Bookings]
+      summary: Validación de disponibilidad de alojamiento
+      description: Verifica si el alojamiento está disponible para un rango de fechas.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Disponibilidad evaluada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        "400":
+          description: Fechas inválidas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Alojamiento no encontrado.
+
+  /reservations:
+    post:
+      tags: [Reservations]
+      summary: Crear reserva
+      description: Crea una reserva PENDING si el alojamiento está disponible.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationCreate'
+      responses:
+        "201":
+          description: Reserva creada (PENDING).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        "400":
+          description: Fechas inválidas o datos faltantes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+        "409":
+          description: Conflicto de disponibilidad (ya reservadas fechas).
+        "422":
+          description: Business rule violation (ej. maxGuests excedido).
+
+    get:
+      tags: [Reservations]
+      summary: Listar reservas del usuario (o admin)
+      description: Devuelve reservas del usuario autenticado. Admin puede ver todas con query param userId.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+        - name: userId
+          in: query
+          description: (Admin) filtrar por usuario
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista paginada de reservas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "401":
+          description: No autorizado.
+
+  /reservations/{id}:
+    get:
+      tags: [Reservations]
+      summary: Obtener detalle de reserva
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reserva.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        "401":
+          description: No autorizado.
+        "404":
+          description: No encontrada.
+    delete:
+      tags: [Reservations]
+      summary: Cancelar reserva (usuario) / eliminación lógica
+      description: Usuario puede cancelar según políticas; host/admin acciones separadas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Reserva cancelada.
+        "400":
+          description: No se puede cancelar (por política).
+        "401":
+          description: No autenticado.
+        "403":
+          description: No autorizado.
+        "404":
+          description: No encontrada.
+
+  /hosts/{hostId}/reservations:
+    get:
+      tags: [Hosts, Reservations]
+      summary: Ver reservas del anfitrión
+      description: Host ve reservas de sus alojamientos.
+      parameters:
+        - name: hostId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista paginada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "401":
+          description: No autorizado.
+
+  /reservations/{id}/decision:
+    patch:
+      tags: [Hosts, Reservations]
+      summary: Aprobar o rechazar reserva (host)
+      description: Host confirma o rechaza una reserva PENDING. Cambios disparan notificaciones.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [APPROVE, REJECT]
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Reserva actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        "400":
+          description: Acción inválida.
+        "401":
+          description: No autorizado.
+        "403":
+          description: No es propietario.
+        "404":
+          description: Reserva no encontrada.
+
+  /accommodations/{id}/comments:
+    post:
+      tags: [Comments]
+      summary: Agregar comentario y calificación
+      description: Usuario autenticado agrega comentario sobre un alojamiento (después de estancia recomendado).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        "201":
+          description: Comentario creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        "400":
+          description: Datos inválidos.
+        "401":
+          description: No autenticado.
+        "403":
+          description: Usuario no puede comentar (no reservado).
+        "409":
+          description: Ya existe comentario para esa reserva (si aplica).
+
+    get:
+      tags: [Comments]
+      summary: Listar comentarios de un alojamiento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+      responses:
+        "200":
+          description: Lista paginada de comentarios.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+
+  /comments/{commentId}/reply:
+    post:
+      tags: [Comments]
+      summary: Responder comentario (anfitrión)
+      description: Host propietario puede responder comentario con un texto.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+              required:
+                - text
+      responses:
+        "201":
+          description: Respuesta agregada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        "401":
+          description: No autenticado.
+        "403":
+          description: No es anfitrión o no propietario.
+        "404":
+          description: Comentario no encontrado.
+
+  /accommodations/{id}/rating:
+    get:
+      tags: [Ratings]
+      summary: Calcular promedio de calificaciones
+      description: Devuelve promedio (2 decimales) y conteo de comentarios. Soporta filtro por rango de fechas.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Estadísticas de rating.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accommodationId: { type: string }
+                  average: { type: number, format: float }
+                  count: { type: integer }
+        "404":
+          description: Alojamiento no encontrado.
+
+  /users/{userId}/favorites:
+    get:
+      tags: [Favorites]
+      summary: Ver lista de favoritos de un usuario
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista paginada de favoritos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "401":
+          description: No autorizado.
+
+    post:
+      tags: [Favorites]
+      summary: Marcar/unmarcar alojamiento como favorito
+      description: Alterna favorito para el usuario autenticado (toggle). También se puede usar endpoint PUT/DELETE si prefieres idempotencia.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accommodationId:
+                  type: string
+              required:
+                - accommodationId
+      responses:
+        "200":
+          description: Favorito agregado o removido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  favorited: { type: boolean }
+        "401":
+          description: No autorizado.
+        "404":
+          description: Alojamiento no encontrado.
+
+  /hosts/{hostId}/metrics/favorites:
+    get:
+      tags: [Metrics]
+      summary: Métrica de favoritos para anfitrión
+      description: Devuelve número de veces que los alojamientos de un host fueron marcados favoritos.
+      parameters:
+        - name: hostId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Métricas de favoritos.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hostId: { type: string }
+                  totalFavorites: { type: integer }
+                  perAccommodation:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        accommodationId: { type: string }
+                        favoritesCount: { type: integer }
+        "401":
+          description: No autorizado.
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Listar notificaciones del usuario
+      description: Devuelve notificaciones del usuario autenticado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+      responses:
+        "200":
+          description: Notificaciones paginadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "401":
+          description: No autorizado.
+    patch:
+      tags: [Notifications]
+      summary: Marcar notificación como leída
+      description: Cambia flag read a true.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notificationId:
+                  type: string
+      responses:
+        "204":
+          description: Marcado como leído.
+        "400":
+          description: Petición inválida.
+        "401":
+          description: No autorizado.
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Admin - listar usuarios
+      description: Admin puede listar, filtrar y paginar usuarios.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [USER, HOST, ADMIN]
+      responses:
+        "200":
+          description: Lista paginada de usuarios.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+        "401":
+          description: No autorizado.
+        "403":
+          description: Requiere rol ADMIN.
+
+    post:
+      tags: [Admin]
+      summary: Admin - crear usuario manual
+      description: Creación administrativa de usuario.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        "201":
+          description: Usuario creado.
+        "403":
+          description: Requiere rol ADMIN.
+
+  /admin/accommodations:
+    get:
+      tags: [Admin]
+      summary: Admin - listar alojamientos
+      description: Admin puede gestionar alojamientos.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+      responses:
+        "200":
+          description: Lista paginada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paginated'
+
+  /search:
+    get:
+      tags: [Search]
+      summary: Búsqueda avanzada (endpoint ligero para front)
+      description: Endpoint orientado al front para obtener resultados con paginación y datos mínimos para tarjetas.
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/sizeParam'
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: services
+          in: query
+          schema:
+            type: array
+            items: { type: string }
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resultados listos para vista de tarjetas.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        pricePerNight: { type: number }
+                        city: { type: string }
+                        thumbnailUrl: { type: string }
+                        ratingAverage: { type: number }
+                  total: { type: integer }
+                  page: { type: integer }
+                  size: { type: integer }
+
+  /health:
+    get:
+      tags: [System]
+      summary: Healthcheck
+      description: Estado del servicio.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: "ok" }
+                  uptime: { type: number }
+                  timestamp: { type: string }
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Autenticación y recuperación de contraseñas.
+  - name: Users
+    description: Gestión de perfiles de usuarios.
+  - name: Hosts
+    description: Endpoints específicos para anfitriones.
+  - name: Accommodations
+    description: CRUD de alojamientos e imágenes.
+  - name: Bookings
+    description: Validación y disponibilidad.
+  - name: Reservations
+    description: Reservas y estado.
+  - name: Comments
+    description: Comentarios y calificaciones.
+  - name: Favorites
+    description: Favoritos.
+  - name: Notifications
+    description: Notificaciones internas.
+  - name: Admin
+    description: Endpoints administrativos (usuarios, alojamientos).
+  - name: Search
+    description: Endpoint optimizado para la búsqueda y tarjetas.
+  - name: Metrics
+    description: Métricas y estadísticas (favoritos, ratings).
+  - name: System
+    description: Health check & sistema
+
