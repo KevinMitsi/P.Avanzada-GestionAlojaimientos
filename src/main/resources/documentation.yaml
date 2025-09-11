@@ -13,371 +13,6 @@ servers:
   - url: http://localhost:8000
     description: Desarrollo local
 
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-  parameters:
-    pageParam:
-      name: page
-      in: query
-      description: Número de página (0-based)
-      required: false
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-    sizeParam:
-      name: size
-      in: query
-      description: Tamaño de página
-      required: false
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-    sortParam:
-      name: sort
-      in: query
-      description: "Campo de ordenamiento (ej: price, createdAt). Prefijo - para descendente."
-      required: false
-      schema:
-        type: string
-  schemas:
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-          example: 400
-        message:
-          type: string
-          example: "Error de validación: el campo email es obligatorio"
-        details:
-          type: object
-          description: Información adicional (opcional)
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-        role:
-          type: string
-          enum: [USER, HOST, ADMIN]
-        avatarUrl:
-          type: string
-          format: uri
-        enabled:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      required: [id, email, role, enabled, createdAt]
-    RegisterRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 8
-        name:
-          type: string
-        role:
-          type: string
-          enum: [USER, HOST]
-        phone:
-          type: string
-      required: [email, password, name, role]
-    LoginRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-      required: [email, password]
-    AuthResponse:
-      type: object
-      properties:
-        accessToken:
-          type: string
-        tokenType:
-          type: string
-          example: Bearer
-        expiresIn:
-          type: integer
-          description: Tiempo en segundos hasta expiración
-    PasswordResetRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-      required: [email]
-    PasswordChangeRequest:
-      type: object
-      properties:
-        currentPassword:
-          type: string
-        newPassword:
-          type: string
-          minLength: 8
-      required: [currentPassword, newPassword]
-    UserUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-        phone:
-          type: string
-        avatarUrl:
-          type: string
-          format: uri
-        bio:
-          type: string
-    HostProfile:
-      type: object
-      properties:
-        hostId:
-          type: string
-        documentUrl:
-          type: string
-          format: uri
-        verified:
-          type: boolean
-        businessName:
-          type: string
-    City:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        country:
-          type: string
-    Accommodation:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        hostId:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        city:
-          $ref: '#/components/schemas/City'
-        address:
-          type: string
-        coordinates:
-          type: object
-          properties:
-            lat: { type: number }
-            lng: { type: number }
-        pricePerNight:
-          type: number
-          format: float
-        services:
-          type: array
-          items:
-            type: string
-          description: Lista de servicios (wifi, parking, piscina...)
-        images:
-          type: array
-          items:
-            $ref: '#/components/schemas/Image'
-        maxGuests:
-          type: integer
-        active:
-          type: boolean
-        softDeleted:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-      required: [id, hostId, title, city, pricePerNight, maxGuests, active]
-    AccommodationCreate:
-      type: object
-      properties:
-        title: { type: string }
-        description: { type: string }
-        cityId: { type: string }
-        address: { type: string }
-        coordinates:
-          type: object
-          properties:
-            lat: { type: number }
-            lng: { type: number }
-        pricePerNight: { type: number }
-        services:
-          type: array
-          items: { type: string }
-        maxGuests: { type: integer }
-      required: [title, cityId, pricePerNight, maxGuests]
-    AccommodationUpdate:
-      type: object
-      properties:
-        title: { type: string }
-        description: { type: string }
-        address: { type: string }
-        coordinates:
-          type: object
-          properties:
-            lat: { type: number }
-            lng: { type: number }
-        pricePerNight: { type: number }
-        services:
-          type: array
-          items: { type: string }
-        maxGuests: { type: integer }
-        active: { type: boolean }
-    Image:
-      type: object
-      properties:
-        id:
-          type: string
-        url:
-          type: string
-          format: uri
-        thumbnailUrl:
-          type: string
-          format: uri
-        createdAt:
-          type: string
-          format: date-time
-    Reservation:
-      type: object
-      properties:
-        id:
-          type: string
-        accommodationId:
-          type: string
-        userId:
-          type: string
-        hostId:
-          type: string
-        startDate:
-          type: string
-          format: date
-        endDate:
-          type: string
-          format: date
-        nights:
-          type: integer
-        totalPrice:
-          type: number
-        status:
-          type: string
-          enum: [PENDING, CONFIRMED, REJECTED, CANCELLED]
-        createdAt:
-          type: string
-          format: date-time
-      required: [id, accommodationId, userId, startDate, endDate, status]
-    ReservationCreate:
-      type: object
-      properties:
-        accommodationId:
-          type: string
-        startDate:
-          type: string
-          format: date
-        endDate:
-          type: string
-        guests:
-          type: integer
-      required: [accommodationId, startDate, endDate, guests]
-    AvailabilityResponse:
-      type: object
-      properties:
-        accommodationId:
-          type: string
-        available:
-          type: boolean
-        blockedDates:
-          type: array
-          items:
-            type: string
-            format: date
-    Comment:
-      type: object
-      properties:
-        id: { type: string }
-        accommodationId: { type: string }
-        userId: { type: string }
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        text: { type: string }
-        reply:
-          type: object
-          properties:
-            hostId: { type: string }
-            text: { type: string }
-            createdAt: { type: string, format: date-time }
-        createdAt: { type: string, format: date-time }
-    CommentCreate:
-      type: object
-      properties:
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        text:
-          type: string
-      required: [rating, text]
-    Favorite:
-      type: object
-      properties:
-        userId: { type: string }
-        accommodationId: { type: string }
-        createdAt: { type: string, format: date-time }
-    Paginated:
-      type: object
-      properties:
-        items:
-          type: array
-          items: {}
-        total:
-          type: integer
-        page:
-          type: integer
-        size:
-          type: integer
-        totalPages:
-          type: integer
-    Notification:
-      type: object
-      properties:
-        id: { type: string }
-        userId: { type: string }
-        title: { type: string }
-        body: { type: string }
-        read: { type: boolean }
-        metadata:
-          type: object
-        createdAt: { type: string, format: date-time }
-
 paths:
 
   /auth/register:
@@ -481,6 +116,8 @@ paths:
                   message:
                     type: string
                     example: "Si existe la cuenta, se ha enviado un email con instrucciones."
+                  token: # Solo para desarrollo/testing
+                    $ref: '#/components/schemas/PasswordResetToken'
         "400":
           description: Petición inválida.
           content:
@@ -1271,7 +908,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Paginated'
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Favorite'
         "401":
           description: No autorizado.
 
@@ -1345,14 +989,19 @@ paths:
         "401":
           description: No autorizado.
 
-  /notifications:
+  /users/{userId}/notifications:
     get:
-      tags: [Notifications]
-      summary: Listar notificaciones del usuario
-      description: Devuelve notificaciones del usuario autenticado.
+      tags: [ Notifications ]
+      summary: Listar notificaciones de un usuario específico
+      description: Devuelve notificaciones del usuario especificado.
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
         - $ref: '#/components/parameters/pageParam'
         - $ref: '#/components/parameters/sizeParam'
       responses:
@@ -1361,9 +1010,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Paginated'
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notification'
         "401":
           description: No autorizado.
+        "403":
+          description: Prohibido (si no es el propio usuario o un administrador).
+        "404":
+          description: Usuario no encontrado.
     patch:
       tags: [Notifications]
       summary: Marcar notificación como leída
@@ -1528,6 +1188,541 @@ paths:
                   status: { type: string, example: "ok" }
                   uptime: { type: number }
                   timestamp: { type: string }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    pageParam:
+      name: page
+      in: query
+      description: Número de página (0-based)
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    sizeParam:
+      name: size
+      in: query
+      description: Tamaño de página
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    sortParam:
+      name: sort
+      in: query
+      description: "Campo de ordenamiento (ej: pricePerNight, createdAt). Prefijo - para descendente."
+      required: false
+      schema:
+        type: string
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "Error de validación: el campo email es obligatorio"
+        details:
+          type: object
+          description: Información adicional (opcional)
+
+    #################################################
+    # Users & Auth
+    #################################################
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        role:
+          type: string
+          enum: [USER, HOST, ADMIN]
+        avatarUrl:
+          type: string
+          format: uri
+        description:
+          type: string
+        documentsUrl:
+          type: array
+          items:
+            type: string
+            format: uri
+        verified:
+          type: boolean
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+      required: [id, email, role, enabled, createdAt]
+      description: Representa al usuario (visitante, host o admin).
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [USER, HOST]
+        phone:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+      required: [email, password, name, role]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Tiempo en segundos hasta expiración
+        user:
+          $ref: '#/components/schemas/User'
+
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required: [email]
+
+    PasswordResetToken:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        tokenHash:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        used:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    PasswordChangeRequest:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+      required: [currentPassword, newPassword]
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        description:
+          type: string
+        documentsUrl:
+          type: array
+          items:
+            type: string
+            format: uri
+
+    HostProfile:
+      type: object
+      properties:
+        hostId:
+          type: string
+        documentsUrl:
+          type: array
+          items:
+            type: string
+            format: uri
+        verified:
+          type: boolean
+        businessName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    #################################################
+    # Accommodations
+    #################################################
+    City:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        country:
+          type: string
+
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        isPrimary:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Accommodation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hostId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        city:
+          $ref: '#/components/schemas/City'
+        address:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        pricePerNight:
+          type: number
+          format: float
+        services:
+          type: array
+          items:
+            type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        maxGuests:
+          type: integer
+        estado:
+          type: string
+          enum: [ACTIVO, ELIMINADO]
+        active:
+          type: boolean
+        softDeleted:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        countReservations:
+          type: integer
+        avgRating:
+          type: number
+          format: float
+      required: [id, hostId, title, city, pricePerNight, maxGuests, createdAt]
+
+    AccommodationCreate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        cityId: { type: string }
+        address: { type: string }
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        pricePerNight: { type: number }
+        services:
+          type: array
+          items: { type: string }
+        maxGuests: { type: integer }
+      required: [title, cityId, pricePerNight, maxGuests]
+
+    AccommodationUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        address: { type: string }
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        pricePerNight: { type: number }
+        services:
+          type: array
+          items: { type: string }
+        maxGuests: { type: integer }
+        active: { type: boolean }
+
+    #################################################
+    # Reservations / Payments
+    #################################################
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+        accommodationId:
+          type: string
+        userId:
+          type: string
+        hostId:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        nights:
+          type: integer
+        totalPrice:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, REJECTED, CANCELLED, COMPLETED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        canceladoAt:
+          type: string
+          format: date-time
+          nullable: true
+        motivoCancelacion:
+          type: string
+          nullable: true
+        canceladoPor:
+          type: string
+          enum: [USUARIO, ANFITRION, SISTEMA]
+      required: [id, accommodationId, userId, startDate, endDate, status]
+
+    ReservationCreate:
+      type: object
+      properties:
+        accommodationId:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        guests:
+          type: integer
+      required: [accommodationId, startDate, endDate, guests]
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        accommodationId:
+          type: string
+        available:
+          type: boolean
+        blockedDates:
+          type: array
+          items:
+            type: string
+            format: date
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        reservationId:
+          type: string
+        amount:
+          type: number
+          format: float
+        method:
+          type: string
+          enum: [CARD, PAYPAL, CASH]
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+        paidAt:
+          type: string
+          format: date-time
+
+    #################################################
+    # Comments / Ratings
+    #################################################
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        reservationId:
+          type: string
+        accommodationId:
+          type: string
+        userId:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+          maxLength: 500
+        hostReply:
+          type: object
+          properties:
+            hostId: { type: string }
+            text: { type: string }
+            createdAt: { type: string, format: date-time }
+        createdAt:
+          type: string
+          format: date-time
+        replyAt:
+          type: string
+          format: date-time
+          nullable: true
+        isModerated:
+          type: boolean
+      required: [id, reservationId, accommodationId, userId, rating, text, createdAt]
+
+    CommentCreate:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+          maxLength: 500
+      required: [rating, text]
+
+    #################################################
+    # Favorites, Notifications, Paginated
+    #################################################
+    Favorite:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        accommodationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, accommodationId, createdAt]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        type:
+          type: string
+          enum: [RESERVA_NUEVA, RESERVA_CANCELADA, COMENTARIO_NUEVO, GENERAL]
+        metadata:
+          type: object
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Paginated:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+        totalPages:
+          type: integer
+
 
 security:
   - bearerAuth: []
