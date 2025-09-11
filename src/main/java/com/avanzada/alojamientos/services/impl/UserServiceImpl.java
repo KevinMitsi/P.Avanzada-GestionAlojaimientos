@@ -23,11 +23,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String updateUser(Integer id) {
+        if (id <= 0){
+            throw new UserNotFoundException("El id del usuario no es valido");
+        }
         return "Usuario con id"+id+" actualizado";
     }
 
     @Override
     public String deleteUser(Integer id) {
+        if (id <= 0){
+            throw new UserNotFoundException("El id del usuario no es valido");
+        }
         return "Usuario con id"+id+" eliminado";
     }
 
