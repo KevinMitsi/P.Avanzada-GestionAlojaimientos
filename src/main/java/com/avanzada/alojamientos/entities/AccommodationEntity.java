@@ -74,14 +74,14 @@ public class AccommodationEntity {
     @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImageEntity> images = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
-//    private List<Reservation> reservations = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
-//    private List<Comment> comments = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
-//    private List<Favorite> favorites = new ArrayList<>();
+    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
+    private List<Reservation> reservations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
+    private List<Favorite> favorites = new ArrayList<>();
 
     @Transient
     private Integer countReservations;
@@ -99,19 +99,19 @@ public class AccommodationEntity {
         updatedAt = LocalDateTime.now();
     }
 
-//    public Integer getCountReservations() {
-//        return reservations != null ? reservations.size() : 0;
-//    }
-//
-//    public Double getAvgRating() {
-//        if (comments == null || comments.isEmpty()) {
-//            return 0.0;
-//        }
-//        return comments.stream()
-//                .mapToInt(Comment::getRating)
-//                .average()
-//                .orElse(0.0);
-//    }
+    public Integer getCountReservations() {
+        return reservations != null ? reservations.size() : 0;
+    }
+
+    public Double getAvgRating() {
+        if (comments == null || comments.isEmpty()) {
+            return 0.0;
+        }
+        return comments.stream()
+                .mapToInt(Comment::getRating)
+                .average()
+                .orElse(0.0);
+    }
 }
 
 

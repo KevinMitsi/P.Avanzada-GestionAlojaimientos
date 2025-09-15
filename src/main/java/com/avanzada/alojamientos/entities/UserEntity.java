@@ -73,22 +73,22 @@ public class UserEntity {
 
     // Relaciones
     @OneToMany(mappedBy = "host", cascade = CascadeType.ALL)
-    private List<Accommodation> accommodations = new ArrayList<>();
+    private List<AccommodationEntity> accommodations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Reservation> reservations = new ArrayList<>();
+    private List<ReservationEntity> reservations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Comment> comments = new ArrayList<>();
+    private List<CommentEntity> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Favorite> favorites = new ArrayList<>();
+    private List<FavoriteEntity> favorites = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Notification> notifications = new ArrayList<>();
+    private List<NotificationEntity> notifications = new ArrayList<>();
 
     @OneToOne(mappedBy = "host", cascade = CascadeType.ALL)
-    private HostProfile hostProfile;
+    private HostProfileEntity hostProfile;
 
     @PrePersist
     protected void onCreate() {
