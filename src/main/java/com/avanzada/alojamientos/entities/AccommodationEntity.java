@@ -2,10 +2,9 @@ package com.avanzada.alojamientos.entities;
 
 import com.avanzada.alojamientos.DTO.model.Coordinates;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,7 +37,7 @@ public class AccommodationEntity {
 
     @Column(nullable = false, precision = 10, scale = 2,
             columnDefinition = "DECIMAL(10,2) CHECK (price_per_night > 0)")
-    private Double pricePerNight;
+    private BigDecimal pricePerNight;
 
     @ElementCollection
     @CollectionTable(name = "accommodation_services", joinColumns = @JoinColumn(name = "accommodation_id"))
@@ -74,14 +73,14 @@ public class AccommodationEntity {
     @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImageEntity> images = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
-//    private List<Reservation> reservations = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
-//    private List<Comment> comments = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
-//    private List<Favorite> favorites = new ArrayList<>();
+    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
+    private List<ReservationEntity> reservations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
+    private List<CommentEntity> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "accommodation", cascade = CascadeType.ALL)
+    private List<FavoriteEntity> favorites = new ArrayList<>();
 
     @Transient
     private Integer countReservations;
@@ -99,19 +98,18 @@ public class AccommodationEntity {
         updatedAt = LocalDateTime.now();
     }
 
-//    public Integer getCountReservations() {
-//        return reservations != null ? reservations.size() : 0;
-//    }
-//
-//    public Double getAvgRating() {
-//        if (comments == null || comments.isEmpty()) {
-//            return 0.0;
-//        }
-//        return comments.stream()
-//                .mapToInt(Comment::getRating)
-//                .average()
-//                .orElse(0.0);
-//    }
-}
+    public Integer getCountReservations() {
+        return reservations != null ? reservations.size() : 0;
+    }
 
+    public Double getAvgRating() {
+        if (comments == null || comments.isEmpty()) {
+            return 0.0;
+        }
+        return comments.stream()
+                .mapToInt(CommentEntity::getRating)
+                .average()
+                .orElse(0.0);
+    }
+}
 

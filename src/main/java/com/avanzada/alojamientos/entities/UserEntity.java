@@ -34,11 +34,11 @@ public class UserEntity {
     private String password;
 
     // Teléfono con regex SQL
-    @Column(name = "phone", columnDefinition = "VARCHAR(15) CHECK (phone ~ '^\\+?[0-9]{8,15}$')")
+    @Column(name = "phone")
     private String phone;
 
     // Fecha de nacimiento debe ser pasada → CHECK en DB
-    @Column(name = "date_of_birth", columnDefinition = "DATE CHECK (date_of_birth < CURRENT_DATE)")
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
@@ -49,7 +49,7 @@ public class UserEntity {
     private String avatarUrl;
 
     // Máximo 1000 caracteres
-    @Column(columnDefinition = "TEXT CHECK (char_length(description) <= 1000)")
+    @Column(nullable = false)
     private String description;
 
     @ElementCollection
@@ -73,22 +73,22 @@ public class UserEntity {
 
     // Relaciones
     @OneToMany(mappedBy = "host", cascade = CascadeType.ALL)
-    private List<Accommodation> accommodations = new ArrayList<>();
+    private List<AccommodationEntity> accommodations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Reservation> reservations = new ArrayList<>();
+    private List<ReservationEntity> reservations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Comment> comments = new ArrayList<>();
+    private List<CommentEntity> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Favorite> favorites = new ArrayList<>();
+    private List<FavoriteEntity> favorites = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Notification> notifications = new ArrayList<>();
+    private List<NotificationEntity> notifications = new ArrayList<>();
 
     @OneToOne(mappedBy = "host", cascade = CascadeType.ALL)
-    private HostProfile hostProfile;
+    private HostProfileEntity hostProfile;
 
     @PrePersist
     protected void onCreate() {
