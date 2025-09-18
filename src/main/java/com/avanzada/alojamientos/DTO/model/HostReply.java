@@ -18,7 +18,7 @@ public class HostReply {
     private String hostId;
 
     @Column(columnDefinition = "TEXT", length = 500, nullable = false)
-    private String text;
+    private String reply;
 
     private LocalDateTime replyAt;
 }

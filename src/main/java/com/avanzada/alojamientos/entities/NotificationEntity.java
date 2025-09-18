@@ -23,17 +23,17 @@ public class NotificationEntity {
     @Column(nullable = false, length = 200) // Se limita la longitud desde la DB
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false)
     private String body;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationType type;
 
-    @Column(columnDefinition = "JSON")
+    @Column
     private String metadata;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private Boolean read = false;
 
     @Column(nullable = false)

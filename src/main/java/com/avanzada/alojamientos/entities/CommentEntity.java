@@ -22,7 +22,7 @@ public class CommentEntity {
     @Column(nullable = false)
     private Integer rating; // la validación de rango se puede manejar en lógica de negocio
 
-    @Column(nullable = false, columnDefinition = "TEXT", length = 500)
+    @Column(nullable = false, columnDefinition = "TEXT", length = 500, name="comment_text")
     private String text;
 
     @Column(nullable = false)

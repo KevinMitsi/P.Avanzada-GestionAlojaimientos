@@ -34,11 +34,11 @@ public class UserEntity {
     private String password;
 
     // Teléfono con regex SQL
-    @Column(name = "phone", columnDefinition = "VARCHAR(15) CHECK (phone ~ '^\\+?[0-9]{8,15}$')")
+    @Column(name = "phone")
     private String phone;
 
     // Fecha de nacimiento debe ser pasada → CHECK en DB
-    @Column(name = "date_of_birth", columnDefinition = "DATE CHECK (date_of_birth < CURRENT_DATE)")
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
@@ -49,7 +49,7 @@ public class UserEntity {
     private String avatarUrl;
 
     // Máximo 1000 caracteres
-    @Column(columnDefinition = "TEXT CHECK (char_length(description) <= 1000)")
+    @Column(nullable = false)
     private String description;
 
     @ElementCollection

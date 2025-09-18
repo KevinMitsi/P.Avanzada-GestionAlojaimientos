@@ -63,7 +63,7 @@ public class ReservationEntity {
     private UserEntity user;
 
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
-    private Payment payment;
+    private PaymentEntity payment;
 
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
     private CommentEntity comment;
