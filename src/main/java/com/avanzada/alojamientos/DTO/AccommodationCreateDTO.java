@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.DTO;
 
-import com.avanzada.alojamientos.Model.Coordinates;
+import com.avanzada.alojamientos.DTO.model.Coordinates;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

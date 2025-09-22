@@ -1,47 +1,59 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.exceptions.UnauthorizedException;
-import com.avanzada.alojamientos.exceptions.UserNotFoundException;
+import com.avanzada.alojamientos.DTO.CreateUserDTO;
+import com.avanzada.alojamientos.DTO.EditUserDTO;
+import com.avanzada.alojamientos.DTO.UserDTO;
+import com.avanzada.alojamientos.DTO.UserRegistrationDTO;
 import com.avanzada.alojamientos.services.UserService;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
+
     @Override
-    public String getUsers(boolean isAdmin) {
-        if (!isAdmin){
-            throw  new UnauthorizedException("No tienes permisos para ver los usuarios");
-        }
-        return "Usuarios: []";
+    public UserDTO register(UserRegistrationDTO dto) {
+        return null;
     }
 
     @Override
-    public String createUser(String data) {
-        return "Usuarios creados";
+    public UserDTO create(CreateUserDTO dto) {
+        return null;
     }
 
     @Override
-    public String updateUser(Integer id) {
-        if (id <= 0){
-            throw new UserNotFoundException("El id del usuario no es valido");
-        }
-        return "Usuario con id"+id+" actualizado";
+    public UserDTO edit(Long userId, EditUserDTO dto) {
+        return null;
     }
 
     @Override
-    public String deleteUser(Integer id) {
-        if (id <= 0){
-            throw new UserNotFoundException("El id del usuario no es valido");
-        }
-        return "Usuario con id"+id+" eliminado";
+    public Optional<UserDTO> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override
-    public String login(String username, String password) {
-       if (username.isBlank() || password.isBlank()){
-           throw new UserNotFoundException("Credenciales no validas");
-       }
-       return "Token de autenticacion: asjdasgduyvsdjasbdjavjsb";
+    public List<UserDTO> findAll() {
+        return List.of();
+    }
+
+    @Override
+    public void enable(String userId, boolean enable) {
+        log.info("Not needed yet");
+    }
+
+    @Override
+    public void delete(String userId) {
+        log.info("Not implemented yet");
+    }
+
+    @Override
+    public void changePassword(String userId, String oldPassword, String newPassword) {
+        log.info("Not completed yet");
     }
 }

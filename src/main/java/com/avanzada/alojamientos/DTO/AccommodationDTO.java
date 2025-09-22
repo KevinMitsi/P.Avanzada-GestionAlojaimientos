@@ -1,8 +1,8 @@
 package com.avanzada.alojamientos.DTO;
 
-import com.avanzada.alojamientos.Model.City;
-import com.avanzada.alojamientos.Model.Coordinates;
-import com.avanzada.alojamientos.Model.Imagen;
+import com.avanzada.alojamientos.DTO.model.City;
+import com.avanzada.alojamientos.DTO.model.Coordinates;
+import com.avanzada.alojamientos.DTO.model.Imagen;
 
 import java.math.BigDecimal;
 import java.util.List;
