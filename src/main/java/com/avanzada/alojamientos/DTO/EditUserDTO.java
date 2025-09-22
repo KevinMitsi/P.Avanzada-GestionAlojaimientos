@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.DTO;
 
-import com.avanzada.alojamientos.Model.Role;
+import com.avanzada.alojamientos.DTO.model.Role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
