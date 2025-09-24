@@ -13,13 +13,15 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class AccommodationServiceImpl implements AccommodationService {
+
+
     @Override
-    public AccommodationDTO create(AccommodationCreateDTO dto, Long hostId) {
+    public AccommodationDTO create(CreateAccommodationDTO dto, Long hostId) {
         return null;
     }
 
     @Override
-    public AccommodationDTO update(Long accommodationId, AccommodationUpdateDTO dto) {
+    public AccommodationDTO update(Long accommodationId, UpdateAccommodationDTO dto) {
         return null;
     }
 

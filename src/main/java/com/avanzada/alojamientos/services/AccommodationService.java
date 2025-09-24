@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AccommodationService {
-    AccommodationDTO create(AccommodationCreateDTO dto, Long hostId);
-    AccommodationDTO update(Long accommodationId, AccommodationUpdateDTO dto);
+    AccommodationDTO create(CreateAccommodationDTO dto, Long hostId);
+    AccommodationDTO update(Long accommodationId, UpdateAccommodationDTO dto);
     Optional<AccommodationDTO> findById(Long accommodationId);
 
     // Búsqueda con criterios avanzados (ciudad, fechas, precio, servicios)

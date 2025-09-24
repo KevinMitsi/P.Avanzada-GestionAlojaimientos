@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.ReservationCreateDTO;
+import com.avanzada.alojamientos.DTO.CreateReservationDTO;
+
 import com.avanzada.alojamientos.DTO.ReservationDTO;
 import com.avanzada.alojamientos.DTO.ReservationSearchCriteriaDTO;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
@@ -12,7 +13,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface ReservationService {
-    ReservationDTO create(Long userId, ReservationCreateDTO dto);
+    ReservationDTO create(Long userId, CreateReservationDTO dto);
     Optional<ReservationDTO> findById(Long reservationId);
 
     // Listados

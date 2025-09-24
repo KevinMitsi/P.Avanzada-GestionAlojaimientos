@@ -1,7 +1,8 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.CommentCreateDTO;
+
 import com.avanzada.alojamientos.DTO.CommentDTO;
+import com.avanzada.alojamientos.DTO.CreateCommentDTO;
 import com.avanzada.alojamientos.services.CommentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ import java.util.Optional;
 @Slf4j
 public class CommentServiceImpl implements CommentService {
     @Override
-    public CommentDTO create(Long userId, Long reservationId, CommentCreateDTO dto, Long accommodationId) {
+    public CommentDTO create(Long userId, Long reservationId, CreateCommentDTO dto, Long accommodationId) {
         return null;
     }
 
