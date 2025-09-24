@@ -1,9 +1,5 @@
 package com.avanzada.alojamientos.DTO;
 
-import com.avanzada.alojamientos.DTO.model.City;
-import com.avanzada.alojamientos.DTO.model.Coordinates;
-import com.avanzada.alojamientos.DTO.model.Imagen;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -12,12 +8,12 @@ public record AccommodationDTO(
         String hostId,
         String title,
         String description,
-        City city,
+        CityDTO city,
         String address,
-        Coordinates coordinates,
+        CoordinatesDTO coordinates,
         BigDecimal pricePerNight,
         List<String> services,
-        List<Imagen> images,
+        List<ImageDTO> images,
         Integer maxGuests,
         String estado,
         Boolean active,

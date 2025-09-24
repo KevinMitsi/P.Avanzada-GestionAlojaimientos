@@ -1,15 +1,17 @@
 package com.avanzada.alojamientos.DTO;
 
+import java.time.LocalDateTime;
+
 public record   CommentDTO (
-        String id,
-        String reservationId,
-        String accommodationId,
-        String userId,
+        Integer id,
         Integer rating,
         String text,
-        String createdAt,
-        String replyAt,
-        Boolean isModerated
+        LocalDateTime createdAt,
+        Boolean isModerated,
+        Integer reservationId,
+        Integer accommodationId,
+        Integer userId,
+        ReplyHostDTO hostReply
 ){
 
 }

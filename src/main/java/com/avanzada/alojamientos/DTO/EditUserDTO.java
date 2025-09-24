@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.DTO;
 
-import com.avanzada.alojamientos.DTO.model.Role;
+import com.avanzada.alojamientos.DTO.model.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -12,6 +12,6 @@ public record EditUserDTO(
         @Length(max = 10) String phone,
         @Length(max = 300) String photoUrl,
         @NotNull @Past LocalDate dateBirth,
-        @NotNull Role role
+        @NotNull UserRole role
 ) {
 }

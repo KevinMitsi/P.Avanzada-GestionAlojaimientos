@@ -1,5 +1,6 @@
 package com.avanzada.alojamientos.DTO;
 
+
 import com.avanzada.alojamientos.DTO.model.NotificationType;
 
 public record NotificationDTO(
