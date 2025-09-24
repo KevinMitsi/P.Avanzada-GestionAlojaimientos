@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.DTO;
 
-import com.avanzada.alojamientos.Model.Role;
+import com.avanzada.alojamientos.DTO.model.UserRole;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,7 +12,7 @@ public record UserDTO(
         String email,
         String phone,
         LocalDate dateOfBirth,
-        Role role,
+        UserRole role,
         String avatarUrl,
         String description,
         List<String> documentsUrl,
