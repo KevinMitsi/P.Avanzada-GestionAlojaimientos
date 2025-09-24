@@ -17,7 +17,7 @@ public class PasswordResetTokenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT con Integer
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 255) // Hash obligatorio y limitado en DB
     private String tokenHash;

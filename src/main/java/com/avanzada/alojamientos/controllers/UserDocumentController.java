@@ -2,7 +2,7 @@ package com.avanzada.alojamientos.controllers;
 
 import com.avanzada.alojamientos.services.UserDocumentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

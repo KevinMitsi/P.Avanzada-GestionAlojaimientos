@@ -17,7 +17,7 @@ public class CommentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Integer AUTO_INCREMENT
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false)
     private Integer rating; // la validación de rango se puede manejar en lógica de negocio

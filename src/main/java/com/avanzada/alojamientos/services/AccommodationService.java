@@ -16,7 +16,7 @@ public interface AccommodationService {
     // Búsqueda con criterios avanzados (ciudad, fechas, precio, servicios)
     Page<AccommodationDTO> search(AccommodationSearchCriteriaDTO criteria, Pageable pageable);
 
-    void delete(String accommodationId);
+    void delete(Long accommodationId);
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
 
     // Gestión de imágenes
@@ -24,5 +24,5 @@ public interface AccommodationService {
     void removeImage(Long accommodationId, String imageUrl);
 
     // Métricas (reservas, promedio de calificaciones, filtrado por fechas)
-    AccommodationMetricsDTO getMetrics(String accommodationId, DateRangeDTO range);
+    AccommodationMetricsDTO getMetrics(Long accommodationId, DateRangeDTO range);
 }

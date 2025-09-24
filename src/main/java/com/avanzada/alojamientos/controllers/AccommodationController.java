@@ -57,12 +57,12 @@ public class AccommodationController {
     }
 
     @DeleteMapping("/{accommodationId}/images/{imageId}")
-    public void removeImage(@PathVariable Long accommodationId, @PathVariable String imageId) {
-        accommodationService.removeImage(accommodationId, imageId);
+    public void removeImage(@PathVariable Long accommodationId, @PathVariable String imageUrl) {
+        accommodationService.removeImage(accommodationId, imageUrl);
     }
 
     @PostMapping("/{accommodationId}/metrics")
-    public AccommodationMetricsDTO getMetrics(@PathVariable String accommodationId,
+    public AccommodationMetricsDTO getMetrics(@PathVariable Long accommodationId,
                                               @RequestBody DateRangeDTO range) {
         return accommodationService.getMetrics(accommodationId, range);
     }

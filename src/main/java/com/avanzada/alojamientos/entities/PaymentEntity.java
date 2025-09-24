@@ -19,7 +19,7 @@ public class PaymentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT con Integer
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, precision = 10, scale = 2) // Monto obligatorio
     private BigDecimal amount;

@@ -22,12 +22,12 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    public Optional<PaymentDTO> findById(@PathVariable String id) {
+    public Optional<PaymentDTO> findById(@PathVariable Long id) {
         return paymentService.findById(id);
     }
 
     @GetMapping("/reservation/{reservationId}")
-    public List<PaymentDTO> findByReservation(@PathVariable String reservationId) {
+    public List<PaymentDTO> findByReservation(@PathVariable Long reservationId) {
         return paymentService.findByReservation(reservationId);
     }
 }

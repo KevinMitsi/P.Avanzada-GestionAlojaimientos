@@ -3,12 +3,9 @@ package com.avanzada.alojamientos.mappers;
 
 import com.avanzada.alojamientos.DTO.CreateAccommodationDTO;
 import com.avanzada.alojamientos.DTO.AccommodationDTO;
+import com.avanzada.alojamientos.DTO.UpdateAccommodationDTO;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-
-
+import org.mapstruct.*;
 
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
@@ -39,6 +36,18 @@ public interface AccommodationMapper {
     @Mapping(target = "countReservations", ignore = true)
     @Mapping(target = "avgRating", ignore = true)
     AccommodationEntity toEntity(CreateAccommodationDTO createAccommodationDTO);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "host", ignore = true)
+    @Mapping(target = "images", ignore = true)
+    @Mapping(target = "reservations", ignore = true)
+    @Mapping(target = "comments", ignore = true)
+    @Mapping(target = "softDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void updateEntityFromDTO(UpdateAccommodationDTO dto, @MappingTarget AccommodationEntity entity);
 
 
 

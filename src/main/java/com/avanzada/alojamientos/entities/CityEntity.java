@@ -17,7 +17,7 @@ public class CityEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 150)
     private String name;
