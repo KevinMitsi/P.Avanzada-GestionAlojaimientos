@@ -1,45 +1,64 @@
 package com.avanzada.alojamientos.controllers;
 
+import com.avanzada.alojamientos.DTO.CreateUserDTO;
+import com.avanzada.alojamientos.DTO.EditUserDTO;
+import com.avanzada.alojamientos.DTO.UserDTO;
+import com.avanzada.alojamientos.DTO.UserRegistrationDTO;
 import com.avanzada.alojamientos.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
-//    private final UserService userService;
-//
-//    @PostMapping("/login")
-//    public ResponseEntity<String> login(String username, String password) {
-//        String token = userService.login(username, password);
-//        return ResponseEntity.ok(token);
-//    }
-//
-//    @GetMapping("/users")
-//    public ResponseEntity<String> getUsers() {
-//        boolean isAdmin = true; // Simulamos que el usuario es admin
-//        String data = userService.getUsers(isAdmin);
-//        return ResponseEntity.ok(data);
-//    }
-//
-//    @PostMapping("/user")
-//    public ResponseEntity<String> registerUser(String data) {
-//        String response = userService.createUser(data);
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    @PutMapping("/user/{id}")
-//    public ResponseEntity<String> updateUser(@PathVariable Integer id) {
-//        String response = userService.updateUser(id);
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    @DeleteMapping("/user/{id}")
-//    public ResponseEntity<String> deleteUser(@PathVariable Integer id) {
-//        String response = userService.deleteUser(id);
-//        return ResponseEntity.ok(response);
-//    }
+    private final UserService userService;
+
+    @PostMapping("/register")
+    public UserDTO register(@RequestBody @Valid UserRegistrationDTO dto) {
+        return userService.register(dto);
+    }
+
+    @PostMapping
+    public UserDTO create(@RequestBody @Valid CreateUserDTO dto) {
+        return userService.create(dto);
+    }
+
+    @PutMapping("/{userId}")
+    public UserDTO edit(@PathVariable Long userId, @RequestBody @Valid EditUserDTO dto) {
+        return userService.edit(userId, dto);
+    }
+
+    @GetMapping("/{userId}")
+    public Optional<UserDTO> findById(@PathVariable Long userId) {
+        return userService.findById(userId);
+    }
+
+    @GetMapping
+    public List<UserDTO> findAll() {
+        return userService.findAll();
+    }
+
+    @PutMapping("/{userId}/enable")
+    public void enable(@PathVariable String userId, @RequestParam boolean enable) {
+        userService.enable(userId, enable);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void delete(@PathVariable String userId) {
+        userService.delete(userId);
+    }
+
+    @PutMapping("/{userId}/password")
+    public void changePassword(@PathVariable String userId,
+                               @RequestParam String oldPassword,
+                               @RequestParam String newPassword) {
+        userService.changePassword(userId, oldPassword, newPassword);
+    }
 }
