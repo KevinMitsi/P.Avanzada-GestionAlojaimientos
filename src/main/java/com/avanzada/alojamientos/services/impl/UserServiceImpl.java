@@ -2,8 +2,9 @@ package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.CreateUserDTO;
 import com.avanzada.alojamientos.DTO.EditUserDTO;
+import com.avanzada.alojamientos.DTO.RegisterUserDTO;
 import com.avanzada.alojamientos.DTO.UserDTO;
-import com.avanzada.alojamientos.DTO.UserRegistrationDTO;
+
 import com.avanzada.alojamientos.services.UserService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +19,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public UserDTO register(UserRegistrationDTO dto) {
+    public UserDTO register(RegisterUserDTO dto) {
         return null;
     }
 

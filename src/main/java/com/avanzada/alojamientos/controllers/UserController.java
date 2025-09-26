@@ -2,8 +2,9 @@ package com.avanzada.alojamientos.controllers;
 
 import com.avanzada.alojamientos.DTO.CreateUserDTO;
 import com.avanzada.alojamientos.DTO.EditUserDTO;
+import com.avanzada.alojamientos.DTO.RegisterUserDTO;
 import com.avanzada.alojamientos.DTO.UserDTO;
-import com.avanzada.alojamientos.DTO.UserRegistrationDTO;
+
 import com.avanzada.alojamientos.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public UserDTO register(@RequestBody @Valid UserRegistrationDTO dto) {
+    public UserDTO register(@RequestBody @Valid RegisterUserDTO dto) {
         return userService.register(dto);
     }
 

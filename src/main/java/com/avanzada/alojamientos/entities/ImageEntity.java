@@ -16,7 +16,7 @@ public class ImageEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 500) // URL obligatoria
     private String url;

@@ -21,7 +21,7 @@ public class ReservationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
-    private Integer id;
+    private Long id;
 
     // Fecha de inicio obligatoria
     @Column(nullable = false)

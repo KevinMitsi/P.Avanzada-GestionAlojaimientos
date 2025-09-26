@@ -19,13 +19,13 @@ public class AccommodationController {
     private final AccommodationService accommodationService;
 
     @PostMapping("/{hostId}")
-    public AccommodationDTO create(@PathVariable Long hostId, @RequestBody @Valid AccommodationCreateDTO dto) {
+    public AccommodationDTO create(@PathVariable Long hostId, @RequestBody @Valid CreateAccommodationDTO dto) {
         return accommodationService.create(dto, hostId);
     }
 
     @PutMapping("/{accommodationId}")
     public AccommodationDTO update(@PathVariable Long accommodationId,
-                                   @RequestBody @Valid AccommodationUpdateDTO dto) {
+                                   @RequestBody @Valid UpdateAccommodationDTO dto) {
         return accommodationService.update(accommodationId, dto);
     }
 
@@ -57,12 +57,12 @@ public class AccommodationController {
     }
 
     @DeleteMapping("/{accommodationId}/images/{imageId}")
-    public void removeImage(@PathVariable Long accommodationId, @PathVariable String imageId) {
-        accommodationService.removeImage(accommodationId, imageId);
+    public void removeImage(@PathVariable Long accommodationId, @PathVariable String imageUrl) {
+        accommodationService.removeImage(accommodationId, imageUrl);
     }
 
     @PostMapping("/{accommodationId}/metrics")
-    public AccommodationMetricsDTO getMetrics(@PathVariable String accommodationId,
+    public AccommodationMetricsDTO getMetrics(@PathVariable Long accommodationId,
                                               @RequestBody DateRangeDTO range) {
         return accommodationService.getMetrics(accommodationId, range);
     }

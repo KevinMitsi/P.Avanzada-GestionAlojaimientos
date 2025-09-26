@@ -18,7 +18,7 @@ public class NotificationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT con Integer
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 200) // Se limita la longitud desde la DB
     private String title;

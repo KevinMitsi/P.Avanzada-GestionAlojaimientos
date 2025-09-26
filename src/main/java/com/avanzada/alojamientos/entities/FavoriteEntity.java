@@ -20,7 +20,7 @@ public class FavoriteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT con Integer
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

@@ -2,14 +2,15 @@ package com.avanzada.alojamientos.services;
 
 import com.avanzada.alojamientos.DTO.CreateUserDTO;
 import com.avanzada.alojamientos.DTO.EditUserDTO;
+import com.avanzada.alojamientos.DTO.RegisterUserDTO;
 import com.avanzada.alojamientos.DTO.UserDTO;
-import com.avanzada.alojamientos.DTO.UserRegistrationDTO;
+
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    UserDTO register(UserRegistrationDTO dto);
+    UserDTO register(RegisterUserDTO dto);
     UserDTO create(CreateUserDTO dto);
     UserDTO edit(Long userId, EditUserDTO dto);
     Optional<UserDTO> findById(Long id);
