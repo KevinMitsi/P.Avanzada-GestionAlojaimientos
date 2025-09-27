@@ -2,7 +2,7 @@ package com.avanzada.alojamientos.mappers;
 
 import com.avanzada.alojamientos.DTO.CreateUserDTO;
 import com.avanzada.alojamientos.DTO.UserDTO;
-import com.avanzada.alojamientos.DTO.RegisterUseDTO;
+
 import com.avanzada.alojamientos.entities.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,7 +12,6 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
     // Entity -> DTO
-    @Mapping(target = "password", ignore = true) // No exponer contraseña
     UserDTO toUserDTO(UserEntity user);
 
     // Create DTO -> Entity

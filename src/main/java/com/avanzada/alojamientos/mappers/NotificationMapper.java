@@ -13,14 +13,14 @@ public interface NotificationMapper {
     @Mapping(source = "user.id", target = "userId", numberFormat = "#")
     @Mapping(source = "read", target = "read")
     @Mapping(source = "createdAt", target = "createdAt", dateFormat = "yyyy-MM-dd'T'HH:mm:ss")
-    @Mapping(target = "metadata", expression = "java(parseMetadata(entity.getMetadata()))")
+    @Mapping(source = "metadata", target = "metadata")
     NotificationDTO toDTO(NotificationEntity entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "user", ignore = true) // Will be set in service
+    @Mapping(target = "user", ignore = true)
     @Mapping(target = "read", constant = "false")
-    @Mapping(target = "metadata", expression = "java(serializeMetadata(dto.metadata()))")
+    @Mapping(source = "metadata", target = "metadata")
     NotificationEntity toEntity(NotificationDTO dto);
 
 

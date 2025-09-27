@@ -3,15 +3,25 @@ package com.avanzada.alojamientos.repositories;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface AccommodationRepository extends JpaRepository<AccommodationEntity, Long> {
+
+    /**
+     * Busca un alojamiento por ID cargando eagerly las imágenes para evitar LazyInitializationException
+     */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services", "reservations", "comments"})
+    @NonNull
+    Optional<AccommodationEntity> findById(@NonNull Long id);
 
     /**
      * Busca alojamientos aplicando filtros opcionales:

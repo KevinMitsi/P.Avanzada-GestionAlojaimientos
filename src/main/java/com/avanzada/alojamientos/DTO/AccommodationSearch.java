@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public record AccommodationSearchCriteriaDTO(
+public record AccommodationSearch(
         @Length(max = 100) String cityId,
         @Future LocalDate startDate,
         @Future LocalDate endDate,

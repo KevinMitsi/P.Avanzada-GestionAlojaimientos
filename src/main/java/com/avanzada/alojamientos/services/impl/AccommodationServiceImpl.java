@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.*;
-import com.avanzada.alojamientos.DTO.model.Coordinates;
+
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+
 import java.util.stream.Stream;
 
 @Service
@@ -75,6 +75,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<AccommodationDTO> findById(Long accommodationId) {
         if (accommodationId == null) {
             return Optional.empty();
@@ -86,13 +87,13 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
-    public Page<AccommodationDTO> search(AccommodationSearchCriteriaDTO criteria, Pageable pageable) {
+    public Page<AccommodationDTO> search(AccommodationSearch criteria, Pageable pageable) {
         Page<AccommodationEntity> entityPage = performSearch(criteria, pageable);
 
         List<AccommodationDTO> dtos = entityPage.stream()
                 .filter(accommodation -> !Boolean.TRUE.equals(accommodation.getSoftDeleted()))
                 .map(accommodationMapper::toAccommodationDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new PageImpl<>(dtos, pageable, entityPage.getTotalElements());
     }
@@ -129,7 +130,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         List<AccommodationDTO> dtos = entityPage.stream()
                 .filter(accommodation -> isHostMatch(accommodation, hostId))
                 .map(accommodationMapper::toAccommodationDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new PageImpl<>(dtos, pageable, entityPage.getTotalElements());
     }
@@ -170,7 +171,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
         List<ImageEntity> filteredImages = currentImages.stream()
                 .filter(image -> !imageUrl.equals(image.getUrl()))
-                .collect(Collectors.toList());
+                .toList();
 
         if (filteredImages.size() == currentImages.size()) {
             log.warn("Image url {} not found in accommodation {}", imageUrl, accommodationId);
@@ -182,7 +183,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
-    public AccommodationMetricsDTO getMetrics(Long accommodationId, DateRangeDTO range) {
+    public AccommodationMetrics getMetrics(Long accommodationId, DateRange range) {
         validateMetricsParameters(accommodationId, range);
 
         AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
@@ -192,7 +193,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         double averageRating = calculateAverageRating(accommodation);
         BigDecimal totalRevenue = calculateTotalRevenue(reservations, range);
 
-        return new AccommodationMetricsDTO(totalReservations, averageRating, totalRevenue);
+        return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
     }
 
     // Private helper methods
@@ -228,7 +229,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         }
     }
 
-    private Page<AccommodationEntity> performSearch(AccommodationSearchCriteriaDTO criteria, Pageable pageable) {
+    private Page<AccommodationEntity> performSearch(AccommodationSearch criteria, Pageable pageable) {
         try {
             if (hasServicesFilter(criteria)) {
                 return accommodationRepository.searchWithServices(
@@ -259,7 +260,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         }
     }
 
-    private boolean hasServicesFilter(AccommodationSearchCriteriaDTO criteria) {
+    private boolean hasServicesFilter(AccommodationSearch criteria) {
         return criteria != null && criteria.services() != null && !criteria.services().isEmpty();
     }
 
@@ -360,7 +361,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         return image;
     }
 
-    private void validateMetricsParameters(Long accommodationId, DateRangeDTO range) {
+    private void validateMetricsParameters(Long accommodationId, DateRange range) {
         if (accommodationId == null || range == null) {
             throw new IllegalArgumentException("Accommodation id and range are required");
         }
@@ -370,7 +371,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         return accommodation.getReservations() != null ? accommodation.getReservations() : Collections.emptyList();
     }
 
-    private long countValidReservations(List<ReservationEntity> reservations, DateRangeDTO range) {
+    private long countValidReservations(List<ReservationEntity> reservations, DateRange range) {
         return getValidReservationsStream(reservations, range).count();
     }
 
@@ -385,14 +386,14 @@ public class AccommodationServiceImpl implements AccommodationService {
                 .orElse(0.0);
     }
 
-    private BigDecimal calculateTotalRevenue(List<ReservationEntity> reservations, DateRangeDTO range) {
+    private BigDecimal calculateTotalRevenue(List<ReservationEntity> reservations, DateRange range) {
         return getValidReservationsStream(reservations, range)
                 .map(ReservationEntity::getTotalPrice)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Stream<ReservationEntity> getValidReservationsStream(List<ReservationEntity> reservations, DateRangeDTO range) {
+    private Stream<ReservationEntity> getValidReservationsStream(List<ReservationEntity> reservations, DateRange range) {
         LocalDate startDate = range.startDate();
         LocalDate endDate = range.endDate();
 

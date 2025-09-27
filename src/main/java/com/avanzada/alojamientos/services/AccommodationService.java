@@ -3,6 +3,7 @@ package com.avanzada.alojamientos.services;
 import com.avanzada.alojamientos.DTO.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.avanzada.alojamientos.DTO.AccommodationMetrics;
 
 
 import java.util.List;
@@ -14,7 +15,7 @@ public interface AccommodationService {
     Optional<AccommodationDTO> findById(Long accommodationId);
 
     // Búsqueda con criterios avanzados (ciudad, fechas, precio, servicios)
-    Page<AccommodationDTO> search(AccommodationSearchCriteriaDTO criteria, Pageable pageable);
+    Page<AccommodationDTO> search(AccommodationSearch criteria, Pageable pageable);
 
     void delete(Long accommodationId);
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
@@ -24,5 +25,5 @@ public interface AccommodationService {
     void removeImage(Long accommodationId, String imageUrl);
 
     // Métricas (reservas, promedio de calificaciones, filtrado por fechas)
-    AccommodationMetricsDTO getMetrics(Long accommodationId, DateRangeDTO range);
+    AccommodationMetrics getMetrics(Long accommodationId, DateRange range);
 }
