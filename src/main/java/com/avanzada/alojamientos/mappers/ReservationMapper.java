@@ -22,7 +22,6 @@ public interface ReservationMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "payment", ignore = true)
     @Mapping(target = "comment", ignore = true)
-    @Mapping(target = "guests", ignore = true)
     ReservationEntity toEntity(CreateReservationDTO dto);
 
     @Mapping(source = "id", target = "id", numberFormat = "#")

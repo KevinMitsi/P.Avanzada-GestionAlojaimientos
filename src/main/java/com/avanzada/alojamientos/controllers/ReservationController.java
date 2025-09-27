@@ -1,8 +1,9 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.ReservationCreateDTO;
+import com.avanzada.alojamientos.DTO.CreateReservationDTO;
+
 import com.avanzada.alojamientos.DTO.ReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationSearchCriteriaDTO;
+import com.avanzada.alojamientos.DTO.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import com.avanzada.alojamientos.services.ReservationService;
 import jakarta.validation.Valid;
@@ -24,7 +25,7 @@ public class ReservationController {
 
     @PostMapping("/{userId}")
     public ReservationDTO create(@PathVariable Long userId,
-                                 @RequestBody @Valid ReservationCreateDTO dto) {
+                                 @RequestBody @Valid CreateReservationDTO dto) {
         return reservationService.create(userId, dto);
     }
 
@@ -44,7 +45,7 @@ public class ReservationController {
     }
 
     @PostMapping("/search")
-    public Page<ReservationDTO> search(@RequestBody ReservationSearchCriteriaDTO criteria, Pageable pageable) {
+    public Page<ReservationDTO> search(@RequestBody ReservationSearchCriteria criteria, Pageable pageable) {
         return reservationService.searchReservations(criteria, pageable);
     }
 

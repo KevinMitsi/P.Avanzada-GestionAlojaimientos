@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class FavoriteEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT con Integer
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -30,7 +30,7 @@ public class FavoriteEntity {
     private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "accommodation_id", nullable = false)
+    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private AccommodationEntity accommodation;
 
     @PrePersist

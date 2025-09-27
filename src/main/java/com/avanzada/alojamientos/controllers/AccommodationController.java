@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.controllers;
 
 import com.avanzada.alojamientos.DTO.*;
+import com.avanzada.alojamientos.DTO.DateRange;
 import com.avanzada.alojamientos.services.AccommodationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,12 +36,12 @@ public class AccommodationController {
     }
 
     @PostMapping("/search")
-    public Page<AccommodationDTO> search(@RequestBody AccommodationSearchCriteriaDTO criteria, Pageable pageable) {
+    public Page<AccommodationDTO> search(@RequestBody AccommodationSearch criteria, Pageable pageable) {
         return accommodationService.search(criteria, pageable);
     }
 
     @DeleteMapping("/{accommodationId}")
-    public void delete(@PathVariable String accommodationId) {
+    public void delete(@PathVariable Long accommodationId) {
         accommodationService.delete(accommodationId);
     }
 
@@ -56,14 +57,14 @@ public class AccommodationController {
         accommodationService.addImage(accommodationId, fileUrls, primary);
     }
 
-    @DeleteMapping("/{accommodationId}/images/{imageId}")
+    @DeleteMapping("/{accommodationId}/images/{imageUrl}")
     public void removeImage(@PathVariable Long accommodationId, @PathVariable String imageUrl) {
         accommodationService.removeImage(accommodationId, imageUrl);
     }
 
     @PostMapping("/{accommodationId}/metrics")
-    public AccommodationMetricsDTO getMetrics(@PathVariable Long accommodationId,
-                                              @RequestBody DateRangeDTO range) {
+    public AccommodationMetrics getMetrics(@PathVariable Long accommodationId,
+                                           @RequestBody DateRange range) {
         return accommodationService.getMetrics(accommodationId, range);
     }
 }

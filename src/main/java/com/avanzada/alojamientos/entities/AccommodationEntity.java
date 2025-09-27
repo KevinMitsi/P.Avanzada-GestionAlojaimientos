@@ -20,7 +20,9 @@ public class AccommodationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "BIGINT UNSIGNED")
     private Long id;
+
 
     @Column(nullable = false, length = 200,
             columnDefinition = "VARCHAR(200) CHECK (char_length(title) >= 5)")
@@ -40,9 +42,16 @@ public class AccommodationEntity {
     private BigDecimal pricePerNight;
 
     @ElementCollection
-    @CollectionTable(name = "accommodation_services", joinColumns = @JoinColumn(name = "accommodation_id"))
+    @CollectionTable(
+            name = "accommodation_services",
+            joinColumns = @JoinColumn(
+                    name = "accommodation_id",
+                    columnDefinition = "BIGINT UNSIGNED NOT NULL"
+            )
+    )
     @Column(name = "service")
     private Set<String> services = new HashSet<>();
+
 
     // Número de huéspedes mínimo = 1
     @Column(nullable = false,
@@ -62,7 +71,7 @@ public class AccommodationEntity {
 
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "host_id", nullable = false)
     private UserEntity host;
 
@@ -112,4 +121,3 @@ public class AccommodationEntity {
                 .orElse(0.0);
     }
 }
-

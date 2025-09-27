@@ -3,7 +3,7 @@ package com.avanzada.alojamientos.services;
 import com.avanzada.alojamientos.DTO.CreateReservationDTO;
 
 import com.avanzada.alojamientos.DTO.ReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationSearchCriteriaDTO;
+import com.avanzada.alojamientos.DTO.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +21,7 @@ public interface ReservationService {
     Page<ReservationDTO> findByAccommodation(Long accommodationId, Pageable pageable);
 
     // Filtros por estado, fechas, usuario/host
-    Page<ReservationDTO> searchReservations(ReservationSearchCriteriaDTO criteria, Pageable pageable);
+    Page<ReservationDTO> searchReservations(ReservationSearchCriteria criteria, Pageable pageable);
 
     // Validaciones
     boolean isAvailable(Long accommodationId, LocalDate start, LocalDate end, int guests);

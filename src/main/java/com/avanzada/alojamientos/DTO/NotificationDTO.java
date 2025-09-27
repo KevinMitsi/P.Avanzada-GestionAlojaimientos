@@ -9,7 +9,7 @@ public record NotificationDTO(
         String title,
         String body,
         NotificationType type,
-        Object metadata,
+        String metadata,
         Boolean read,
         String createdAt
 ) {

@@ -1,7 +1,8 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.CommentCreateDTO;
+
 import com.avanzada.alojamientos.DTO.CommentDTO;
+import com.avanzada.alojamientos.DTO.CreateCommentDTO;
 import com.avanzada.alojamientos.services.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class CommentController {
     public CommentDTO create(@PathVariable Long userId,
                              @PathVariable Long reservationId,
                              @PathVariable Long accommodationId,
-                             @RequestBody @Valid CommentCreateDTO dto) {
+                             @RequestBody @Valid CreateCommentDTO dto) {
         return commentService.create(userId, reservationId, dto, accommodationId);
     }
 

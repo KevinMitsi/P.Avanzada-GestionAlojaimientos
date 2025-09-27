@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record AccommodationDTO(
-        String id,
-        String hostId,
+        Long id,
+        Long hostId,
         String title,
         String description,
         CityDTO city,
@@ -15,7 +15,6 @@ public record AccommodationDTO(
         List<String> services,
         List<ImageDTO> images,
         Integer maxGuests,
-        String estado,
         Boolean active,
         Boolean softDeleted,
         String deletedAt,

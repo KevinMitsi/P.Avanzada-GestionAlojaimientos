@@ -36,7 +36,7 @@ public class CommentEntity {
     private ReservationEntity reservation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "accommodation_id", nullable = false)
+    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private AccommodationEntity accommodation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -51,4 +51,3 @@ public class CommentEntity {
         createdAt = LocalDateTime.now();
     }
 }
-

@@ -55,7 +55,7 @@ public class ReservationEntity {
     private CancelledBy cancelledBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "accommodation_id", nullable = false)
+    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private AccommodationEntity accommodation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -81,6 +81,3 @@ public class ReservationEntity {
         updatedAt = LocalDateTime.now();
     }
 }
-
-
-

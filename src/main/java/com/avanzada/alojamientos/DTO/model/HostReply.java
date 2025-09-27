@@ -14,11 +14,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class HostReply {
 
-    @Column(nullable = false)
-    private String hostId;
+    @Column(name = "host_id")
+    private Long hostId;
 
-    @Column(columnDefinition = "TEXT", length = 500, nullable = false)
+    @Column(columnDefinition = "TEXT", name = "reply")
     private String reply;
 
+    @Column(name = "reply_at")
     private LocalDateTime replyAt;
 }

@@ -2,7 +2,7 @@ package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.CreateReservationDTO;
 import com.avanzada.alojamientos.DTO.ReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationSearchCriteriaDTO;
+import com.avanzada.alojamientos.DTO.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import com.avanzada.alojamientos.services.ReservationService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public Page<ReservationDTO> searchReservations(ReservationSearchCriteriaDTO criteria, Pageable pageable) {
+    public Page<ReservationDTO> searchReservations(ReservationSearchCriteria criteria, Pageable pageable) {
         return null;
     }
 
