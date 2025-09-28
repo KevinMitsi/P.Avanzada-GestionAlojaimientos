@@ -1,9 +1,9 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.CreateReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.CreateReservationDTO;
 
-import com.avanzada.alojamientos.DTO.ReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationSearchCriteria;
+import com.avanzada.alojamientos.DTO.reservation.ReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

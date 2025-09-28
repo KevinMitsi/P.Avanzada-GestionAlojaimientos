@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.PaymentDTO;
+import com.avanzada.alojamientos.DTO.other.PaymentDTO;
 import com.avanzada.alojamientos.entities.PaymentEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

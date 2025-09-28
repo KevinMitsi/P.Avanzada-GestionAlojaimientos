@@ -1,8 +1,8 @@
 package com.avanzada.alojamientos.services;
 
 
-import com.avanzada.alojamientos.DTO.CommentDTO;
-import com.avanzada.alojamientos.DTO.CreateCommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CreateCommentDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

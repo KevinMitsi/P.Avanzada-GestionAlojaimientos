@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.CreateReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.CreateReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.ReservationDTO;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

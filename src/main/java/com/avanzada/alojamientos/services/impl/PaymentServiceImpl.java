@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.PaymentDTO;
+import com.avanzada.alojamientos.DTO.other.PaymentDTO;
 import com.avanzada.alojamientos.services.PaymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

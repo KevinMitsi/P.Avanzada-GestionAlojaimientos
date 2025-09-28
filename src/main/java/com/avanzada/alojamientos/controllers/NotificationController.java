@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.NotificationDTO;
+import com.avanzada.alojamientos.DTO.notification.NotificationDTO;
 import com.avanzada.alojamientos.services.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

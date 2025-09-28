@@ -1,8 +1,8 @@
 package com.avanzada.alojamientos.services.impl;
 
 
-import com.avanzada.alojamientos.DTO.CommentDTO;
-import com.avanzada.alojamientos.DTO.CreateCommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CreateCommentDTO;
 import com.avanzada.alojamientos.services.CommentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

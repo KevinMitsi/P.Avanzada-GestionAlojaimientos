@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.SessionLoginDTO;
-import com.avanzada.alojamientos.DTO.UserDTO;
+import com.avanzada.alojamientos.DTO.auth.SessionLoginDTO;
+import com.avanzada.alojamientos.DTO.user.UserDTO;
 import com.avanzada.alojamientos.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

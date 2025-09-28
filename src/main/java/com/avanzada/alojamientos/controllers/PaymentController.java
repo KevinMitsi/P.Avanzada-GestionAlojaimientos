@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.PaymentDTO;
+import com.avanzada.alojamientos.DTO.other.PaymentDTO;
 import com.avanzada.alojamientos.services.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

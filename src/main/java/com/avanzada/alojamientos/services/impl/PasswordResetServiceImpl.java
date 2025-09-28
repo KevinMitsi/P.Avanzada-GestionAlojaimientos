@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.PasswordResetDto;
-import com.avanzada.alojamientos.DTO.PasswordResetRequestDTO;
+import com.avanzada.alojamientos.DTO.auth.PasswordResetDto;
+import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
 import com.avanzada.alojamientos.services.PasswordResetService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

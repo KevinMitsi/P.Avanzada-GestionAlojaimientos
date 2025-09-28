@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.CityDTO;
+import com.avanzada.alojamientos.DTO.city.CityDTO;
 import com.avanzada.alojamientos.entities.CityEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

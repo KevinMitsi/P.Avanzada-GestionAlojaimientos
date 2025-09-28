@@ -1,9 +1,9 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.CreateUserDTO;
-import com.avanzada.alojamientos.DTO.EditUserDTO;
-import com.avanzada.alojamientos.DTO.RegisterUserDTO;
-import com.avanzada.alojamientos.DTO.UserDTO;
+import com.avanzada.alojamientos.DTO.user.CreateUserDTO;
+import com.avanzada.alojamientos.DTO.user.EditUserDTO;
+import com.avanzada.alojamientos.DTO.auth.RegisterUserDTO;
+import com.avanzada.alojamientos.DTO.user.UserDTO;
 
 
 import java.util.List;

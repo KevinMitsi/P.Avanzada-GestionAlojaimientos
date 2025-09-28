@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.NotificationDTO;
+import com.avanzada.alojamientos.DTO.notification.NotificationDTO;
 
 import java.util.List;
 import java.util.Optional;

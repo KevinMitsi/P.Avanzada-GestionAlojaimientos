@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.CreateUserDTO;
-import com.avanzada.alojamientos.DTO.UserDTO;
+import com.avanzada.alojamientos.DTO.user.CreateUserDTO;
+import com.avanzada.alojamientos.DTO.user.UserDTO;
 
 import com.avanzada.alojamientos.entities.UserEntity;
 import org.mapstruct.Mapper;

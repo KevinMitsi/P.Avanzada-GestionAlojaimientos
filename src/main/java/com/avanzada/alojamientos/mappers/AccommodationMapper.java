@@ -1,9 +1,9 @@
 package com.avanzada.alojamientos.mappers;
 
 
-import com.avanzada.alojamientos.DTO.CreateAccommodationDTO;
-import com.avanzada.alojamientos.DTO.AccommodationDTO;
-import com.avanzada.alojamientos.DTO.UpdateAccommodationDTO;
+import com.avanzada.alojamientos.DTO.accommodation.CreateAccommodationDTO;
+import com.avanzada.alojamientos.DTO.accommodation.AccommodationDTO;
+import com.avanzada.alojamientos.DTO.accommodation.UpdateAccommodationDTO;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import org.mapstruct.*;
 

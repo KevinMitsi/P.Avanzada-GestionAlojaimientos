@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.NotificationDTO;
+import com.avanzada.alojamientos.DTO.notification.NotificationDTO;
 import com.avanzada.alojamientos.entities.NotificationEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

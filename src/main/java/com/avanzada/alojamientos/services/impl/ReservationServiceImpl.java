@@ -1,8 +1,8 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.CreateReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationSearchCriteria;
+import com.avanzada.alojamientos.DTO.reservation.CreateReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.ReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import com.avanzada.alojamientos.services.ReservationService;
 import lombok.extern.slf4j.Slf4j;

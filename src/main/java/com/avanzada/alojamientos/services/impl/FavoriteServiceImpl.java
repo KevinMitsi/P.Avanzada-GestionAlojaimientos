@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.FavoriteDTO;
+import com.avanzada.alojamientos.DTO.other.FavoriteDTO;
 import com.avanzada.alojamientos.services.FavoriteService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
