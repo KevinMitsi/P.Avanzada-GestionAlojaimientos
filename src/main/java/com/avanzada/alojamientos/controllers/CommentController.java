@@ -1,8 +1,8 @@
 package com.avanzada.alojamientos.controllers;
 
 
-import com.avanzada.alojamientos.DTO.CommentDTO;
-import com.avanzada.alojamientos.DTO.CreateCommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CreateCommentDTO;
 import com.avanzada.alojamientos.services.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

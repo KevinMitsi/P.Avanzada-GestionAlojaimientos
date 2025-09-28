@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.PasswordResetDto;
-import com.avanzada.alojamientos.DTO.PasswordResetRequestDTO;
+import com.avanzada.alojamientos.DTO.auth.PasswordResetDto;
+import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
 import com.avanzada.alojamientos.services.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

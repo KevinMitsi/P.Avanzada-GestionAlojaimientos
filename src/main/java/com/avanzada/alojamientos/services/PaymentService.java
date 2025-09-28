@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.PaymentDTO;
+import com.avanzada.alojamientos.DTO.other.PaymentDTO;
 
 import java.util.List;
 import java.util.Optional;

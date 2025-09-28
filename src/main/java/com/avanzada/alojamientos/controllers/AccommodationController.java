@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.*;
-import com.avanzada.alojamientos.DTO.DateRange;
+import com.avanzada.alojamientos.DTO.other.DateRange;
+import com.avanzada.alojamientos.DTO.accommodation.*;
 import com.avanzada.alojamientos.services.AccommodationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

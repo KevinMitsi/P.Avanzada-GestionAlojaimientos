@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.ImageDTO;
+import com.avanzada.alojamientos.DTO.other.ImageDTO;
 import com.avanzada.alojamientos.entities.ImageEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

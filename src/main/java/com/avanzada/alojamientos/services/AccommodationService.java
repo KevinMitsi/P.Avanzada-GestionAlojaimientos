@@ -1,9 +1,9 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.*;
+import com.avanzada.alojamientos.DTO.accommodation.*;
+import com.avanzada.alojamientos.DTO.other.DateRange;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.avanzada.alojamientos.DTO.AccommodationMetrics;
 
 
 import java.util.List;

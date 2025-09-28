@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.SessionLoginDTO;
-import com.avanzada.alojamientos.DTO.UserDTO;
+import com.avanzada.alojamientos.DTO.auth.SessionLoginDTO;
+import com.avanzada.alojamientos.DTO.user.UserDTO;
 
 public interface AuthService {
     UserDTO login(SessionLoginDTO dto);

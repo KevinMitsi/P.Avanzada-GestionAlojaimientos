@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.CreateCommentDTO;
-import com.avanzada.alojamientos.DTO.CommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CreateCommentDTO;
+import com.avanzada.alojamientos.DTO.comment.CommentDTO;
 import com.avanzada.alojamientos.entities.CommentEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

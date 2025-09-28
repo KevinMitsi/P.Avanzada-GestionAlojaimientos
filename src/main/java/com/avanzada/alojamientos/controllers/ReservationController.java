@@ -1,9 +1,9 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.CreateReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.CreateReservationDTO;
 
-import com.avanzada.alojamientos.DTO.ReservationDTO;
-import com.avanzada.alojamientos.DTO.ReservationSearchCriteria;
+import com.avanzada.alojamientos.DTO.reservation.ReservationDTO;
+import com.avanzada.alojamientos.DTO.reservation.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import com.avanzada.alojamientos.services.ReservationService;
 import jakarta.validation.Valid;

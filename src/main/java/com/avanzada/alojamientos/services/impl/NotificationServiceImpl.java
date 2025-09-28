@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.NotificationDTO;
+import com.avanzada.alojamientos.DTO.notification.NotificationDTO;
 import com.avanzada.alojamientos.services.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

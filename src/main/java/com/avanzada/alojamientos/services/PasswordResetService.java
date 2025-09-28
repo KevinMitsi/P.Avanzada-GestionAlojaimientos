@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services;
 
-import com.avanzada.alojamientos.DTO.PasswordResetDto;
-import com.avanzada.alojamientos.DTO.PasswordResetRequestDTO;
+import com.avanzada.alojamientos.DTO.auth.PasswordResetDto;
+import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
 
 public interface PasswordResetService {
     void requestReset(PasswordResetRequestDTO dto);

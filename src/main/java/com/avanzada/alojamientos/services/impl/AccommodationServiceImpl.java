@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services.impl;
 
-import com.avanzada.alojamientos.DTO.*;
-
+import com.avanzada.alojamientos.DTO.accommodation.*;
+import com.avanzada.alojamientos.DTO.other.DateRange;
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;

@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.mappers;
 
-import com.avanzada.alojamientos.DTO.FavoriteDTO;
+import com.avanzada.alojamientos.DTO.other.FavoriteDTO;
 import com.avanzada.alojamientos.entities.FavoriteEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

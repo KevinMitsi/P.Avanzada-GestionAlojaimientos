@@ -1,6 +1,6 @@
 package com.avanzada.alojamientos.controllers;
 
-import com.avanzada.alojamientos.DTO.FavoriteDTO;
+import com.avanzada.alojamientos.DTO.other.FavoriteDTO;
 import com.avanzada.alojamientos.services.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
