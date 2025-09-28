@@ -3,7 +3,7 @@ package com.avanzada.alojamientos.DTO;
 import java.time.LocalDateTime;
 
 public record ReplyHostDTO(
-        Integer hostId,
+        long hostId,
         String text,
         LocalDateTime createdAt
 

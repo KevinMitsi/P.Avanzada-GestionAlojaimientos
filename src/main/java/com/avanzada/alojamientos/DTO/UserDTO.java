@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record UserDTO(
-        String id,
+        long id,
         String name,
         String email,
         String phone,

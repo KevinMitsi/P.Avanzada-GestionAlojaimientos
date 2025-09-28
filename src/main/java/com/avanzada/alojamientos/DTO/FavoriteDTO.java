@@ -1,9 +1,9 @@
 package com.avanzada.alojamientos.DTO;
 
 public record FavoriteDTO(
-        String id,
-        String userId,
-        String accommodationId,
+        long id,
+        long userId,
+        long accommodationId,
         String createdA
 ) {
 }
