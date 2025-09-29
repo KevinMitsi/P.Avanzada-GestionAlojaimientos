@@ -8,10 +8,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record ReservationDTO(
-        long id,
-        long accommodationId,
-        long userId,
-        long hostId,
+        Long id,
+        Long accommodationId,
+        Long userId,
+        Long hostId,
         LocalDate startDate,
         LocalDate endDate,
         Integer nights,

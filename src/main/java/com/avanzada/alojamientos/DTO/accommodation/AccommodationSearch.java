@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record AccommodationSearch(
-        @Length(max = 100) String cityId,
+        @Length(max = 100) Long cityId,
         @Future LocalDate startDate,
         @Future LocalDate endDate,
         @Min(1) Integer guests,
