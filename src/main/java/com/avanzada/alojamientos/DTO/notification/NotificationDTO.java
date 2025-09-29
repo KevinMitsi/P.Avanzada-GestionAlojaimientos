@@ -4,8 +4,8 @@ package com.avanzada.alojamientos.DTO.notification;
 import com.avanzada.alojamientos.DTO.model.NotificationType;
 
 public record NotificationDTO(
-        long id,
-        long userId,
+        Long id,
+        Long userId,
         String title,
         String body,
         NotificationType type,

@@ -3,7 +3,7 @@ package com.avanzada.alojamientos.DTO.other;
 import java.time.LocalDateTime;
 
 public record ImageDTO(
-        long id,
+        Long id,
         String url,
         String thumbnailUrl,
         Boolean isPrimary,

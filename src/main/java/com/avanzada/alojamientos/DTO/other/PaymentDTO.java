@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 public record PaymentDTO(
         Long id,
-        long reservationId,
+        Long reservationId,
         BigDecimal amount,
         PaymentMethod method,
         PaymentStatus status,

@@ -5,14 +5,14 @@ import com.avanzada.alojamientos.DTO.host.ReplyHostDTO;
 import java.time.LocalDateTime;
 
 public record   CommentDTO (
-        long id,
+        Long id,
         Integer rating,
         String text,
         LocalDateTime createdAt,
         Boolean isModerated,
         Integer reservationId,
         Integer accommodationId,
-        long userId,
+        Long userId,
         ReplyHostDTO hostReply
 ){
 

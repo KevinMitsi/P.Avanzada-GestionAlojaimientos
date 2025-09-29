@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record CreateReservationDTO(
-        @NotBlank long accommodationId,
+        @NotBlank Long accommodationId,
         @NotNull @Future LocalDate startDate,
         @NotNull @Future LocalDate endDate,
         @NotNull Long user
