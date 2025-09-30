@@ -120,6 +120,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable) {
         if (hostId == null) {
             return Page.empty(pageable);
@@ -186,11 +187,20 @@ public class AccommodationServiceImpl implements AccommodationService {
     public AccommodationMetrics getMetrics(Long accommodationId, DateRange range) {
         validateMetricsParameters(accommodationId, range);
 
-        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
-        List<ReservationEntity> reservations = getReservations(accommodation);
+        // Cargar accommodation con reservations para calcular métricas de reservas y revenue
+        AccommodationEntity accommodationWithReservations = accommodationRepository
+                .findByIdWithReservations(accommodationId)
+                .orElseThrow(() -> new NoSuchElementException("Accommodation not found: " + accommodationId));
+
+        // Cargar accommodation con comments para calcular rating promedio
+        AccommodationEntity accommodationWithComments = accommodationRepository
+                .findByIdWithComments(accommodationId)
+                .orElseThrow(() -> new NoSuchElementException("Accommodation not found: " + accommodationId));
+
+        List<ReservationEntity> reservations = getReservations(accommodationWithReservations);
 
         long totalReservations = countValidReservations(reservations, range);
-        double averageRating = calculateAverageRating(accommodation);
+        double averageRating = calculateAverageRating(accommodationWithComments);
         BigDecimal totalRevenue = calculateTotalRevenue(reservations, range);
 
         return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
