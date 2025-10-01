@@ -5,10 +5,13 @@ import com.avanzada.alojamientos.DTO.other.DateRange;
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
+import com.avanzada.alojamientos.services.ImageService;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.ImageEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
+import com.avanzada.alojamientos.exceptions.UploadingImageException;
+import com.avanzada.alojamientos.exceptions.DeletingImageException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,6 +40,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
+    private final ImageService imageService;
 
     /**
      * DTO validations (Jakarta Bean Validation) expected:
@@ -137,52 +142,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         return new PageImpl<>(dtos, pageable, entityPage.getTotalElements());
     }
 
-    @Override
-    @Transactional
-    public void addImage(Long accommodationId, List<String> fileUrls, boolean primary) {
-        if (fileUrls == null || fileUrls.isEmpty()) {
-            return;
-        }
 
-        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
-        validateNotDeleted(accommodation);
-
-        List<ImageEntity> currentImages = getCurrentImages(accommodation);
-        validateImageCapacity(currentImages);
-
-        if (primary) {
-            setPrimaryToFalse(currentImages);
-        }
-
-        List<ImageEntity> newImages = createNewImages(fileUrls, accommodation, primary, currentImages.size());
-        currentImages.addAll(newImages);
-
-        accommodation.setImages(currentImages);
-        accommodationRepository.save(accommodation);
-    }
-
-    @Override
-    @Transactional
-    public void removeImage(Long accommodationId, String imageUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            return;
-        }
-
-        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
-        List<ImageEntity> currentImages = getCurrentImages(accommodation);
-
-        List<ImageEntity> filteredImages = currentImages.stream()
-                .filter(image -> !imageUrl.equals(image.getUrl()))
-                .toList();
-
-        if (filteredImages.size() == currentImages.size()) {
-            log.warn("Image url {} not found in accommodation {}", imageUrl, accommodationId);
-            return;
-        }
-
-        accommodation.setImages(filteredImages);
-        accommodationRepository.save(accommodation);
-    }
 
     @Override
     public AccommodationMetrics getMetrics(Long accommodationId, DateRange range) {
@@ -205,6 +165,97 @@ public class AccommodationServiceImpl implements AccommodationService {
         BigDecimal totalRevenue = calculateTotalRevenue(reservations, range);
 
         return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
+    }
+
+
+    @Transactional
+    public List<String> uploadAndAddImages(Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingImageException {
+        if (imageFiles == null || imageFiles.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
+        validateNotDeleted(accommodation);
+
+        List<ImageEntity> currentImages = getCurrentImages(accommodation);
+        validateImageCapacity(currentImages, imageFiles.size());
+
+        if (primary) {
+            setPrimaryToFalse(currentImages);
+        }
+
+        List<String> uploadedUrls = new ArrayList<>();
+        List<ImageEntity> newImages = new ArrayList<>();
+
+        for (int i = 0; i < imageFiles.size(); i++) {
+            MultipartFile file = imageFiles.get(i);
+            try {
+                Map<Object, Object> uploadResult = imageService.upload(file);
+                String imageUrl = (String) uploadResult.get("secure_url");
+                String publicId = (String) uploadResult.get("public_id");
+                String thumbnailUrl = (String) uploadResult.get("eager");
+
+                ImageEntity image = createImageEntityFromCloudinary(
+                    imageUrl,
+                    publicId,
+                    thumbnailUrl,
+                    primary && i == 0,
+                    accommodation
+                );
+                newImages.add(image);
+                uploadedUrls.add(imageUrl);
+
+            } catch (UploadingImageException e) {
+                log.error("Error uploading image for accommodation {}: {}", accommodationId, e.getMessage());
+                throw e;
+            }
+        }
+
+        currentImages.addAll(newImages);
+        accommodation.setImages(currentImages);
+        accommodationRepository.save(accommodation);
+
+        return uploadedUrls;
+    }
+
+
+    @Transactional
+    public void deleteImageFromCloudinary(Long accommodationId, String imageUrl) throws DeletingImageException {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new DeletingImageException("imageUrl is required");
+        }
+        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
+        List<ImageEntity> currentImages = getCurrentImages(accommodation);
+
+        // Buscar la imagen por URL para obtener el public_id
+        Optional<ImageEntity> imageToDelete = currentImages.stream()
+                .filter(image -> imageUrl.equals(image.getUrl()))
+                .findFirst();
+
+        if (imageToDelete.isEmpty()) {
+            throw new DeletingImageException("Image not found in accommodation: " + imageUrl);
+        }
+
+        ImageEntity image = imageToDelete.get();
+
+        try {
+            // Eliminar de Cloudinary usando el public_id
+            if (image.getCloudinaryPublicId() != null) {
+                imageService.delete(image.getCloudinaryPublicId());
+            }
+
+            // Eliminar de la base de datos
+            List<ImageEntity> updatedImages = currentImages.stream()
+                    .filter(img -> !imageUrl.equals(img.getUrl()))
+                    .toList();
+
+            accommodation.setImages(updatedImages);
+            accommodationRepository.save(accommodation);
+
+        } catch (DeletingImageException e) {
+            log.error("Error deleting image from Cloudinary: {}", e.getMessage());
+            throw e;
+        }
     }
 
     // Private helper methods
@@ -336,9 +387,9 @@ public class AccommodationServiceImpl implements AccommodationService {
         return accommodation.getImages() != null ? accommodation.getImages() : new ArrayList<>();
     }
 
-    private void validateImageCapacity(List<ImageEntity> currentImages) {
+    private void validateImageCapacity(List<ImageEntity> currentImages, int additionalImages) {
         int remainingSpace = MAX_IMAGES - currentImages.size();
-        if (remainingSpace <= 0) {
+        if (remainingSpace <= 0 || remainingSpace < additionalImages) {
             throw new IllegalStateException("Max images reached: " + MAX_IMAGES);
         }
     }
@@ -347,25 +398,14 @@ public class AccommodationServiceImpl implements AccommodationService {
         images.forEach(image -> image.setIsPrimary(false));
     }
 
-    private List<ImageEntity> createNewImages(List<String> fileUrls, AccommodationEntity accommodation,
-                                              boolean primary, int currentImageCount) {
-        int remainingSpace = MAX_IMAGES - currentImageCount;
-        int imagesToAdd = Math.min(remainingSpace, fileUrls.size());
 
-        List<ImageEntity> newImages = new ArrayList<>();
 
-        for (int i = 0; i < imagesToAdd; i++) {
-            String url = fileUrls.get(i);
-            ImageEntity image = createImageEntity(url, primary && i == 0, accommodation);
-            newImages.add(image);
-        }
-
-        return newImages;
-    }
-
-    private ImageEntity createImageEntity(String url, boolean isPrimary, AccommodationEntity accommodation) {
+    private ImageEntity createImageEntityFromCloudinary(String url, String publicId, String thumbnailUrl,
+                                                        boolean isPrimary, AccommodationEntity accommodation) {
         ImageEntity image = new ImageEntity();
         image.setUrl(url);
+        image.setCloudinaryPublicId(publicId);
+        image.setCloudinaryThumbnailUrl(thumbnailUrl);
         image.setIsPrimary(isPrimary);
         image.setCreatedAt(LocalDateTime.now());
         image.setAccommodation(accommodation);

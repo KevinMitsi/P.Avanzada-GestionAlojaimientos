@@ -1,7 +1,9 @@
 package com.avanzada.alojamientos.controllers.error;
 
 import com.avanzada.alojamientos.DTO.notification.ResponseErrorDTO;
+import com.avanzada.alojamientos.exceptions.DeletingImageException;
 import com.avanzada.alojamientos.exceptions.UnauthorizedException;
+import com.avanzada.alojamientos.exceptions.UploadingImageException;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +49,28 @@ public class ControllerAdvice {
         );
 
         return ResponseEntity.badRequest().body(error);
+    }
+
+    // --- NUEVO: Error subiendo imagen ---
+    @ExceptionHandler(UploadingImageException.class)
+    public ResponseEntity<ResponseErrorDTO> handleUploadingImage(UploadingImageException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error al subir la imagen",
+                Map.of("detalle", ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    // --- NUEVO: Error eliminando imagen ---
+    @ExceptionHandler(DeletingImageException.class)
+    public ResponseEntity<ResponseErrorDTO> handleDeletingImage(DeletingImageException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error al eliminar la imagen",
+                Map.of("detalle", ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
 }

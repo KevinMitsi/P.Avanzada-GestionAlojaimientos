@@ -3,6 +3,9 @@ package com.avanzada.alojamientos.controllers;
 import com.avanzada.alojamientos.DTO.other.DateRange;
 import com.avanzada.alojamientos.DTO.accommodation.*;
 import com.avanzada.alojamientos.services.AccommodationService;
+import com.avanzada.alojamientos.services.impl.AccommodationServiceImpl;
+import com.avanzada.alojamientos.exceptions.UploadingImageException;
+import com.avanzada.alojamientos.exceptions.DeletingImageException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,7 +40,6 @@ public class AccommodationController {
         return ResponseEntity.ok(result);
     }
 
-    // Cambiar a GET con @RequestParam para evitar conflicto de rutas
     @GetMapping("/search")
     public ResponseEntity<Page<AccommodationDTO>> search(
             @RequestParam(required = false) Long cityId,
@@ -74,18 +77,30 @@ public class AccommodationController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/{accommodationId}/images")
-    public ResponseEntity<Void> addImage(@PathVariable Long accommodationId,
-                         @RequestBody List<String> fileUrls,
-                         @RequestParam(defaultValue = "false") boolean primary) {
-        accommodationService.addImage(accommodationId, fileUrls, primary);
-        return ResponseEntity.ok().build();
+
+    @PostMapping("/{accommodationId}/images/upload")
+    public ResponseEntity<List<String>> uploadImages(@PathVariable Long accommodationId,
+                                     @RequestParam("images") List<MultipartFile> imageFiles,
+                                     @RequestParam(defaultValue = "false") boolean primary) {
+        try {
+            List<String> uploadedUrls = ((AccommodationServiceImpl) accommodationService)
+                    .uploadAndAddImages(accommodationId, imageFiles, primary);
+            return ResponseEntity.ok(uploadedUrls);
+        } catch (UploadingImageException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    @DeleteMapping("/{accommodationId}/images/{imageUrl}")
-    public ResponseEntity<Void> removeImage(@PathVariable Long accommodationId, @PathVariable String imageUrl) {
-        accommodationService.removeImage(accommodationId, imageUrl);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/{accommodationId}/images")
+    public ResponseEntity<Void> deleteImageFromCloudinary(@PathVariable Long accommodationId,
+                                           @RequestParam String imageUrl) {
+        try {
+            ((AccommodationServiceImpl) accommodationService)
+                    .deleteImageFromCloudinary(accommodationId, imageUrl);
+            return ResponseEntity.noContent().build();
+        } catch (DeletingImageException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/{accommodationId}/metrics")
@@ -95,7 +110,6 @@ public class AccommodationController {
         return ResponseEntity.ok(result);
     }
 
-    // Mover este endpoint al final para evitar conflictos con rutas específicas
     @GetMapping("/{accommodationId}")
     public ResponseEntity<AccommodationDTO> findById(@PathVariable Long accommodationId) {
         Optional<AccommodationDTO> result = accommodationService.findById(accommodationId);
