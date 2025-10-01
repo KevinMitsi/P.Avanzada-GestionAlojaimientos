@@ -37,7 +37,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         SELECT a
         FROM AccommodationEntity a
         WHERE a.softDeleted = false
-          AND (:city IS NULL OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :city, '%')))
+          AND (:city IS NULL OR a.city.id = :city)
           AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
           AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
           AND (:guests IS NULL OR a.maxGuests >= :guests)
@@ -75,7 +75,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         FROM AccommodationEntity a
         JOIN a.services s
         WHERE a.softDeleted = false
-          AND (:city IS NULL OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :city, '%')))
+          AND (:city IS NULL OR a.city.id = :city)
           AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
           AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
           AND (:guests IS NULL OR a.maxGuests >= :guests)

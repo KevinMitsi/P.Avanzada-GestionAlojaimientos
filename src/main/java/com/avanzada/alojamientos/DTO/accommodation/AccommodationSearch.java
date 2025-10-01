@@ -16,6 +16,5 @@ public record AccommodationSearch(
         @Min(1) Integer guests,
         @Positive BigDecimal minPrice,
         @Positive BigDecimal maxPrice,
-
         List<String> services
 ) {}

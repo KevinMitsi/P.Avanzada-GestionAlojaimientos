@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 public class AccommodationServiceImpl implements AccommodationService {
 
     private static final int MAX_IMAGES = 10;
+    public static final String ACCOMMODATION_NOT_FOUND_MESSAGE = "Accommodation not found: ";
 
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
@@ -190,12 +191,12 @@ public class AccommodationServiceImpl implements AccommodationService {
         // Cargar accommodation con reservations para calcular métricas de reservas y revenue
         AccommodationEntity accommodationWithReservations = accommodationRepository
                 .findByIdWithReservations(accommodationId)
-                .orElseThrow(() -> new NoSuchElementException("Accommodation not found: " + accommodationId));
+                .orElseThrow(() -> new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId));
 
         // Cargar accommodation con comments para calcular rating promedio
         AccommodationEntity accommodationWithComments = accommodationRepository
                 .findByIdWithComments(accommodationId)
-                .orElseThrow(() -> new NoSuchElementException("Accommodation not found: " + accommodationId));
+                .orElseThrow(() -> new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId));
 
         List<ReservationEntity> reservations = getReservations(accommodationWithReservations);
 
@@ -224,13 +225,13 @@ public class AccommodationServiceImpl implements AccommodationService {
 
         if (!accommodationRepository.existsById(accommodationId)) {
             log.warn("Accommodation not found: {}", accommodationId);
-            throw new NoSuchElementException("Accommodation not found: " + accommodationId);
+            throw new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId);
         }
     }
 
     private AccommodationEntity findAccommodationEntity(Long accommodationId) {
         return accommodationRepository.findById(accommodationId)
-                .orElseThrow(() -> new NoSuchElementException("Accommodation not found: " + accommodationId));
+                .orElseThrow(() -> new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId));
     }
 
     private void validateNotDeleted(AccommodationEntity entity) {

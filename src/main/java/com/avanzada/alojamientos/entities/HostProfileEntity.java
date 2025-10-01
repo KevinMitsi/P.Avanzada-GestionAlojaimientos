@@ -20,7 +20,7 @@ public class HostProfileEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT con Integer
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "host_id", nullable = false, unique = true) // Relación 1 a 1 con User
     private UserEntity host;
 

@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,15 +36,28 @@ public class AccommodationController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/{accommodationId}")
-    public ResponseEntity<AccommodationDTO> findById(@PathVariable Long accommodationId) {
-        Optional<AccommodationDTO> result = accommodationService.findById(accommodationId);
-        return result.map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-    }
+    // Cambiar a GET con @RequestParam para evitar conflicto de rutas
+    @GetMapping("/search")
+    public ResponseEntity<Page<AccommodationDTO>> search(
+            @RequestParam(required = false) Long cityId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) List<String> services,
+            Pageable pageable) {
 
-    @PostMapping("/search")
-    public ResponseEntity<Page<AccommodationDTO>> search(@RequestBody AccommodationSearch criteria, Pageable pageable) {
+        AccommodationSearch criteria = new AccommodationSearch(
+                cityId,
+                startDate != null ? LocalDate.parse(startDate) : null,
+                endDate != null ? LocalDate.parse(endDate) : null,
+                guests,
+                minPrice,
+                maxPrice,
+                services
+        );
+
         Page<AccommodationDTO> result = accommodationService.search(criteria, pageable);
         return ResponseEntity.ok(result);
     }
@@ -78,5 +93,13 @@ public class AccommodationController {
                                            @RequestBody DateRange range) {
         AccommodationMetrics result = accommodationService.getMetrics(accommodationId, range);
         return ResponseEntity.ok(result);
+    }
+
+    // Mover este endpoint al final para evitar conflictos con rutas específicas
+    @GetMapping("/{accommodationId}")
+    public ResponseEntity<AccommodationDTO> findById(@PathVariable Long accommodationId) {
+        Optional<AccommodationDTO> result = accommodationService.findById(accommodationId);
+        return result.map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
     }
 }
