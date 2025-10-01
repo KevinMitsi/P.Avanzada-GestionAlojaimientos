@@ -25,6 +25,6 @@ public class CityEntity {
     @Column(nullable = false, length = 150)
     private String country;
 
-    @OneToMany(mappedBy = "city")
+    @OneToMany(mappedBy = "city", fetch = FetchType.EAGER)
     private List<AccommodationEntity> accommodations = new ArrayList<>();
 }

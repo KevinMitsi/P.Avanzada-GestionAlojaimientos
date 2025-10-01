@@ -5,5 +5,4 @@ public record ResponseErrorDTO(
         String message,
         Object details
 
-) {
-}
+) { }

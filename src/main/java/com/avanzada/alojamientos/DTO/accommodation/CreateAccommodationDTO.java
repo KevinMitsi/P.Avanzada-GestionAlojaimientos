@@ -15,6 +15,7 @@ import java.util.List;
 public record CreateAccommodationDTO(
         @NotBlank @Length(min = 5, max = 200) String title,
         @NotBlank @Length(max = 1000) String description,
+        @NotNull @Positive Long city,
         @Valid CoordinatesDTO coordinates,
         @NotBlank @Length(max = 300) String address,
         @NotNull @Positive BigDecimal pricePerNight,

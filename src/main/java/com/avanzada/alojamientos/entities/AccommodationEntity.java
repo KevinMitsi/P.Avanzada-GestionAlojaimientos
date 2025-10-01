@@ -108,16 +108,26 @@ public class AccommodationEntity {
     }
 
     public Integer getCountReservations() {
-        return reservations != null ? reservations.size() : 0;
+        try {
+            return reservations != null ? reservations.size() : 0;
+        } catch (Exception e) {
+            // Si hay LazyInitializationException, retornamos 0
+            return 0;
+        }
     }
 
     public Double getAvgRating() {
-        if (comments == null || comments.isEmpty()) {
+        try {
+            if (comments == null || comments.isEmpty()) {
+                return 0.0;
+            }
+            return comments.stream()
+                    .mapToInt(CommentEntity::getRating)
+                    .average()
+                    .orElse(0.0);
+        } catch (Exception e) {
+            // Si hay LazyInitializationException, retornamos 0.0
             return 0.0;
         }
-        return comments.stream()
-                .mapToInt(CommentEntity::getRating)
-                .average()
-                .orElse(0.0);
     }
 }

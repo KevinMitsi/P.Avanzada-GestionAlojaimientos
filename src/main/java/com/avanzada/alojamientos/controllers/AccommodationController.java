@@ -3,12 +3,20 @@ package com.avanzada.alojamientos.controllers;
 import com.avanzada.alojamientos.DTO.other.DateRange;
 import com.avanzada.alojamientos.DTO.accommodation.*;
 import com.avanzada.alojamientos.services.AccommodationService;
+import com.avanzada.alojamientos.services.impl.AccommodationServiceImpl;
+import com.avanzada.alojamientos.exceptions.UploadingImageException;
+import com.avanzada.alojamientos.exceptions.DeletingImageException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,52 +28,89 @@ public class AccommodationController {
     private final AccommodationService accommodationService;
 
     @PostMapping("/{hostId}")
-    public AccommodationDTO create(@PathVariable Long hostId, @RequestBody @Valid CreateAccommodationDTO dto) {
-        return accommodationService.create(dto, hostId);
+    public ResponseEntity<AccommodationDTO> create(@PathVariable Long hostId, @RequestBody @Valid CreateAccommodationDTO dto) {
+        AccommodationDTO result = accommodationService.create(dto, hostId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PutMapping("/{accommodationId}")
-    public AccommodationDTO update(@PathVariable Long accommodationId,
+    public ResponseEntity<AccommodationDTO> update(@PathVariable Long accommodationId,
                                    @RequestBody @Valid UpdateAccommodationDTO dto) {
-        return accommodationService.update(accommodationId, dto);
+        AccommodationDTO result = accommodationService.update(accommodationId, dto);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/{accommodationId}")
-    public Optional<AccommodationDTO> findById(@PathVariable Long accommodationId) {
-        return accommodationService.findById(accommodationId);
-    }
+    @GetMapping("/search")
+    public ResponseEntity<Page<AccommodationDTO>> search(
+            @RequestParam(required = false) Long cityId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) List<String> services,
+            Pageable pageable) {
 
-    @PostMapping("/search")
-    public Page<AccommodationDTO> search(@RequestBody AccommodationSearch criteria, Pageable pageable) {
-        return accommodationService.search(criteria, pageable);
+        AccommodationSearch criteria = new AccommodationSearch(
+                cityId,
+                startDate != null ? LocalDate.parse(startDate) : null,
+                endDate != null ? LocalDate.parse(endDate) : null,
+                guests,
+                minPrice,
+                maxPrice,
+                services
+        );
+
+        Page<AccommodationDTO> result = accommodationService.search(criteria, pageable);
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{accommodationId}")
-    public void delete(@PathVariable Long accommodationId) {
+    public ResponseEntity<Void> delete(@PathVariable Long accommodationId) {
         accommodationService.delete(accommodationId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/host/{hostId}")
-    public Page<AccommodationDTO> findByHost(@PathVariable Long hostId, Pageable pageable) {
-        return accommodationService.findByHost(hostId, pageable);
+    public ResponseEntity<Page<AccommodationDTO>> findByHost(@PathVariable Long hostId, Pageable pageable) {
+        Page<AccommodationDTO> result = accommodationService.findByHost(hostId, pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/{accommodationId}/images")
-    public void addImage(@PathVariable Long accommodationId,
-                         @RequestBody List<String> fileUrls,
-                         @RequestParam(defaultValue = "false") boolean primary) {
-        accommodationService.addImage(accommodationId, fileUrls, primary);
+
+    @PostMapping("/{accommodationId}/images/upload")
+    public ResponseEntity<List<String>> uploadImages(@PathVariable Long accommodationId,
+                                     @RequestParam("images") List<MultipartFile> imageFiles,
+                                     @RequestParam(defaultValue = "false") boolean primary) throws UploadingImageException {
+        List<String> uploadedUrls = ((AccommodationServiceImpl) accommodationService)
+                    .uploadAndAddImages(accommodationId, imageFiles, primary);
+        return ResponseEntity.ok(uploadedUrls);
+
     }
 
-    @DeleteMapping("/{accommodationId}/images/{imageUrl}")
-    public void removeImage(@PathVariable Long accommodationId, @PathVariable String imageUrl) {
-        accommodationService.removeImage(accommodationId, imageUrl);
+    @DeleteMapping("/{accommodationId}/images")
+    public ResponseEntity<Void> deleteImageFromCloudinary(@PathVariable Long accommodationId,
+                                           @RequestParam String imageUrl) {
+        try {
+            ((AccommodationServiceImpl) accommodationService)
+                    .deleteImageFromCloudinary(accommodationId, imageUrl);
+            return ResponseEntity.noContent().build();
+        } catch (DeletingImageException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/{accommodationId}/metrics")
-    public AccommodationMetrics getMetrics(@PathVariable Long accommodationId,
+    public ResponseEntity<AccommodationMetrics> getMetrics(@PathVariable Long accommodationId,
                                            @RequestBody DateRange range) {
-        return accommodationService.getMetrics(accommodationId, range);
+        AccommodationMetrics result = accommodationService.getMetrics(accommodationId, range);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{accommodationId}")
+    public ResponseEntity<AccommodationDTO> findById(@PathVariable Long accommodationId) {
+        Optional<AccommodationDTO> result = accommodationService.findById(accommodationId);
+        return result.map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
     }
 }
-

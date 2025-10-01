@@ -54,11 +54,11 @@ public class ReservationEntity {
     @Enumerated(EnumType.STRING)
     private CancelledBy cancelledBy;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private AccommodationEntity accommodation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 

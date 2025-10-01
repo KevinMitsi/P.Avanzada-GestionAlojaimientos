@@ -24,6 +24,13 @@ public class ImageEntity {
     @Column(length = 500)
     private String thumbnailUrl;
 
+    // Campos específicos para Cloudinary
+    @Column(length = 200)
+    private String cloudinaryPublicId;
+
+    @Column(length = 500)
+    private String cloudinaryThumbnailUrl;
+
     @Column(nullable = false)
     private Boolean isPrimary = false;
 

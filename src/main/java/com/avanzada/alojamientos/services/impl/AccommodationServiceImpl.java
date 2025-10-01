@@ -5,10 +5,13 @@ import com.avanzada.alojamientos.DTO.other.DateRange;
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
+import com.avanzada.alojamientos.services.ImageService;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.ImageEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
+import com.avanzada.alojamientos.exceptions.UploadingImageException;
+import com.avanzada.alojamientos.exceptions.DeletingImageException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,17 +36,13 @@ import java.util.stream.Stream;
 public class AccommodationServiceImpl implements AccommodationService {
 
     private static final int MAX_IMAGES = 10;
+    public static final String ACCOMMODATION_NOT_FOUND_MESSAGE = "Accommodation not found: ";
 
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
+    private final ImageService imageService;
 
-    /**
-     * DTO validations (Jakarta Bean Validation) expected:
-     * - title non-null / not blank
-     * - description length limit
-     * - pricePerNight positive
-     * - maxGuests positive
-     */
+
     @Override
     @Transactional
     public AccommodationDTO create(CreateAccommodationDTO dto, Long hostId) {
@@ -120,6 +120,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable) {
         if (hostId == null) {
             return Page.empty(pageable);
@@ -135,65 +136,120 @@ public class AccommodationServiceImpl implements AccommodationService {
         return new PageImpl<>(dtos, pageable, entityPage.getTotalElements());
     }
 
+
+
     @Override
+    public AccommodationMetrics getMetrics(Long accommodationId, DateRange range) {
+        validateMetricsParameters(accommodationId, range);
+
+        // Cargar accommodation con reservations para calcular métricas de reservas y revenue
+        AccommodationEntity accommodationWithReservations = accommodationRepository
+                .findByIdWithReservations(accommodationId)
+                .orElseThrow(() -> new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId));
+
+        // Cargar accommodation con comments para calcular rating promedio
+        AccommodationEntity accommodationWithComments = accommodationRepository
+                .findByIdWithComments(accommodationId)
+                .orElseThrow(() -> new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId));
+
+        List<ReservationEntity> reservations = getReservations(accommodationWithReservations);
+
+        long totalReservations = countValidReservations(reservations, range);
+        double averageRating = calculateAverageRating(accommodationWithComments);
+        BigDecimal totalRevenue = calculateTotalRevenue(reservations, range);
+
+        return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
+    }
+
+
     @Transactional
-    public void addImage(Long accommodationId, List<String> fileUrls, boolean primary) {
-        if (fileUrls == null || fileUrls.isEmpty()) {
-            return;
+    public List<String> uploadAndAddImages(Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingImageException {
+        if (imageFiles == null || imageFiles.isEmpty()) {
+            return Collections.emptyList();
         }
 
         AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
         validateNotDeleted(accommodation);
 
         List<ImageEntity> currentImages = getCurrentImages(accommodation);
-        validateImageCapacity(currentImages);
+        validateImageCapacity(currentImages, imageFiles.size());
 
         if (primary) {
             setPrimaryToFalse(currentImages);
         }
 
-        List<ImageEntity> newImages = createNewImages(fileUrls, accommodation, primary, currentImages.size());
-        currentImages.addAll(newImages);
+        List<String> uploadedUrls = new ArrayList<>();
+        List<ImageEntity> newImages = new ArrayList<>();
 
-        accommodation.setImages(currentImages);
-        accommodationRepository.save(accommodation);
-    }
+        for (int i = 0; i < imageFiles.size(); i++) {
+            MultipartFile file = imageFiles.get(i);
+            try {
+                Map<Object, Object> uploadResult = imageService.upload(file);
+                String imageUrl = (String) uploadResult.get("secure_url");
+                String publicId = (String) uploadResult.get("public_id");
+                String thumbnailUrl = (String) uploadResult.get("eager");
 
-    @Override
-    @Transactional
-    public void removeImage(Long accommodationId, String imageUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            return;
+                ImageEntity image = createImageEntityFromCloudinary(
+                    imageUrl,
+                    publicId,
+                    thumbnailUrl,
+                    primary && i == 0,
+                    accommodation
+                );
+                newImages.add(image);
+                uploadedUrls.add(imageUrl);
+
+            } catch (UploadingImageException e) {
+                log.error("Error uploading image for accommodation {}: {}", accommodationId, e.getMessage());
+                throw e;
+            }
         }
 
+        currentImages.addAll(newImages);
+        accommodation.setImages(currentImages);
+        accommodationRepository.save(accommodation);
+
+        return uploadedUrls;
+    }
+
+
+    @Transactional
+    public void deleteImageFromCloudinary(Long accommodationId, String imageUrl) throws DeletingImageException {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new DeletingImageException("imageUrl is required");
+        }
         AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
         List<ImageEntity> currentImages = getCurrentImages(accommodation);
 
-        List<ImageEntity> filteredImages = currentImages.stream()
-                .filter(image -> !imageUrl.equals(image.getUrl()))
-                .toList();
+        // Buscar la imagen por URL para obtener el public_id
+        Optional<ImageEntity> imageToDelete = currentImages.stream()
+                .filter(image -> imageUrl.equals(image.getUrl()))
+                .findFirst();
 
-        if (filteredImages.size() == currentImages.size()) {
-            log.warn("Image url {} not found in accommodation {}", imageUrl, accommodationId);
-            return;
+        if (imageToDelete.isEmpty()) {
+            throw new DeletingImageException("Image not found in accommodation: " + imageUrl);
         }
 
-        accommodation.setImages(filteredImages);
-        accommodationRepository.save(accommodation);
-    }
+        ImageEntity image = imageToDelete.get();
 
-    @Override
-    public AccommodationMetrics getMetrics(Long accommodationId, DateRange range) {
-        validateMetricsParameters(accommodationId, range);
+        try {
+            // Eliminar de Cloudinary usando el public_id
+            if (image.getCloudinaryPublicId() != null) {
+                imageService.delete(image.getCloudinaryPublicId());
+            }
 
-        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
-        List<ReservationEntity> reservations = getReservations(accommodation);
+            // Eliminar de la base de datos
+            List<ImageEntity> updatedImages = currentImages.stream()
+                    .filter(img -> !imageUrl.equals(img.getUrl()))
+                    .toList();
 
-        long totalReservations = countValidReservations(reservations, range);
-        double averageRating = calculateAverageRating(accommodation);
-        BigDecimal totalRevenue = calculateTotalRevenue(reservations, range);
+            accommodation.setImages(updatedImages);
+            accommodationRepository.save(accommodation);
 
-        return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
+        } catch (DeletingImageException e) {
+            log.error("Error deleting image from Cloudinary: {}", e.getMessage());
+            throw e;
+        }
     }
 
     // Private helper methods
@@ -214,13 +270,13 @@ public class AccommodationServiceImpl implements AccommodationService {
 
         if (!accommodationRepository.existsById(accommodationId)) {
             log.warn("Accommodation not found: {}", accommodationId);
-            throw new NoSuchElementException("Accommodation not found: " + accommodationId);
+            throw new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId);
         }
     }
 
     private AccommodationEntity findAccommodationEntity(Long accommodationId) {
         return accommodationRepository.findById(accommodationId)
-                .orElseThrow(() -> new NoSuchElementException("Accommodation not found: " + accommodationId));
+                .orElseThrow(() -> new NoSuchElementException(ACCOMMODATION_NOT_FOUND_MESSAGE + accommodationId));
     }
 
     private void validateNotDeleted(AccommodationEntity entity) {
@@ -325,9 +381,9 @@ public class AccommodationServiceImpl implements AccommodationService {
         return accommodation.getImages() != null ? accommodation.getImages() : new ArrayList<>();
     }
 
-    private void validateImageCapacity(List<ImageEntity> currentImages) {
+    private void validateImageCapacity(List<ImageEntity> currentImages, int additionalImages) {
         int remainingSpace = MAX_IMAGES - currentImages.size();
-        if (remainingSpace <= 0) {
+        if (remainingSpace <= 0 || remainingSpace < additionalImages) {
             throw new IllegalStateException("Max images reached: " + MAX_IMAGES);
         }
     }
@@ -336,25 +392,14 @@ public class AccommodationServiceImpl implements AccommodationService {
         images.forEach(image -> image.setIsPrimary(false));
     }
 
-    private List<ImageEntity> createNewImages(List<String> fileUrls, AccommodationEntity accommodation,
-                                              boolean primary, int currentImageCount) {
-        int remainingSpace = MAX_IMAGES - currentImageCount;
-        int imagesToAdd = Math.min(remainingSpace, fileUrls.size());
 
-        List<ImageEntity> newImages = new ArrayList<>();
 
-        for (int i = 0; i < imagesToAdd; i++) {
-            String url = fileUrls.get(i);
-            ImageEntity image = createImageEntity(url, primary && i == 0, accommodation);
-            newImages.add(image);
-        }
-
-        return newImages;
-    }
-
-    private ImageEntity createImageEntity(String url, boolean isPrimary, AccommodationEntity accommodation) {
+    private ImageEntity createImageEntityFromCloudinary(String url, String publicId, String thumbnailUrl,
+                                                        boolean isPrimary, AccommodationEntity accommodation) {
         ImageEntity image = new ImageEntity();
         image.setUrl(url);
+        image.setCloudinaryPublicId(publicId);
+        image.setCloudinaryThumbnailUrl(thumbnailUrl);
         image.setIsPrimary(isPrimary);
         image.setCreatedAt(LocalDateTime.now());
         image.setAccommodation(accommodation);

@@ -19,11 +19,6 @@ public interface AccommodationService {
 
     void delete(Long accommodationId);
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
-
-    // Gestión de imágenes
-    void addImage(Long accommodationId, List<String> fileUrls, boolean primary);
-    void removeImage(Long accommodationId, String imageUrl);
-
     // Métricas (reservas, promedio de calificaciones, filtrado por fechas)
     AccommodationMetrics getMetrics(Long accommodationId, DateRange range);
 }

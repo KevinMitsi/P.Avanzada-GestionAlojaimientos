@@ -26,11 +26,11 @@ public class UserEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(unique = true, nullable = false, length = 255)
+    @Column(unique = true, nullable = false)
     private String email;
 
     // Contraseña con mínimo 8 caracteres
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String password;
 
     // Teléfono con regex SQL
