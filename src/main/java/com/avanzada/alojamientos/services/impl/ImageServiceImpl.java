@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.services.impl;
 
 
+import com.avanzada.alojamientos.exceptions.ConnectionCloudinaryException;
 import com.avanzada.alojamientos.exceptions.DeletingImageException;
 import com.avanzada.alojamientos.exceptions.UploadingImageException;
 import com.avanzada.alojamientos.services.ImageService;
@@ -19,31 +20,34 @@ import java.util.Objects;
 @Service
 public class ImageServiceImpl implements ImageService {
 
-    @Value("${cloudinary.cloud_name}")
-    private String cloudName;
+    public static final String APP_CLOUDINARY_STORAGE = "app_staygo_project";
 
-    @Value("${cloudinary.api_key}")
-    private String apiKey;
-
-    @Value("${cloudinary.api_secret}")
-    private String apiSecret;
-
+    private final String cloudName;
+    private final String apiKey;
+    private final String apiSecret;
     private final Cloudinary cloudinary;
 
-    public ImageServiceImpl(){
+    public ImageServiceImpl(@Value("${cloudinary.cloud_name}") String cloudName,
+                           @Value("${cloudinary.api_key}") String apiKey,
+                           @Value("${cloudinary.api_secret}") String apiSecret) {
+        this.cloudName = cloudName;
+        this.apiKey = apiKey;
+        this.apiSecret = apiSecret;
+
         Map<String, String> config = new HashMap<>();
         config.put("cloud_name", cloudName);
         config.put("api_key", apiKey);
         config.put("api_secret", apiSecret);
-        cloudinary = new Cloudinary(config);
+        this.cloudinary = new Cloudinary(config);
     }
 
     @Override
     public Map upload(MultipartFile image) throws UploadingImageException {
         File file;
         try {
+        validateCloudinaryConfig();
             file = convert(image);
-            return cloudinary.uploader().upload(file, ObjectUtils.asMap("folder", "app_accommodations"));
+            return cloudinary.uploader().upload(file, ObjectUtils.asMap("folder", APP_CLOUDINARY_STORAGE));
         } catch (IOException ex) {
             throw new UploadingImageException(ex.getMessage());
         }
@@ -52,9 +56,18 @@ public class ImageServiceImpl implements ImageService {
     @Override
     public Map delete(String imageId) throws DeletingImageException {
         try {
+        validateCloudinaryConfig();
             return cloudinary.uploader().destroy(imageId, ObjectUtils.emptyMap());
         } catch (IOException e) {
             throw new DeletingImageException(e.getMessage());
+        }
+    }
+
+    private void validateCloudinaryConfig() throws ConnectionCloudinaryException {
+        if ("default_cloud_name".equals(cloudName) ||
+            "default_api_key".equals(apiKey) ||
+            "default_api_secret".equals(apiSecret)) {
+            throw new ConnectionCloudinaryException("Cloudinary credentials not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.");
         }
     }
 

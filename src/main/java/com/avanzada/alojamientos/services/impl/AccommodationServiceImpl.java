@@ -42,13 +42,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     private final AccommodationMapper accommodationMapper;
     private final ImageService imageService;
 
-    /**
-     * DTO validations (Jakarta Bean Validation) expected:
-     * - title non-null / not blank
-     * - description length limit
-     * - pricePerNight positive
-     * - maxGuests positive
-     */
+
     @Override
     @Transactional
     public AccommodationDTO create(CreateAccommodationDTO dto, Long hostId) {

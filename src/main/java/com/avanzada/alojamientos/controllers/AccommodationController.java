@@ -81,14 +81,11 @@ public class AccommodationController {
     @PostMapping("/{accommodationId}/images/upload")
     public ResponseEntity<List<String>> uploadImages(@PathVariable Long accommodationId,
                                      @RequestParam("images") List<MultipartFile> imageFiles,
-                                     @RequestParam(defaultValue = "false") boolean primary) {
-        try {
-            List<String> uploadedUrls = ((AccommodationServiceImpl) accommodationService)
+                                     @RequestParam(defaultValue = "false") boolean primary) throws UploadingImageException {
+        List<String> uploadedUrls = ((AccommodationServiceImpl) accommodationService)
                     .uploadAndAddImages(accommodationId, imageFiles, primary);
-            return ResponseEntity.ok(uploadedUrls);
-        } catch (UploadingImageException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(uploadedUrls);
+
     }
 
     @DeleteMapping("/{accommodationId}/images")
