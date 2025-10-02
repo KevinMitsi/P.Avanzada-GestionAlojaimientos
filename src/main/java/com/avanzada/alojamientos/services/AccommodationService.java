@@ -1,12 +1,10 @@
 package com.avanzada.alojamientos.services;
 
 import com.avanzada.alojamientos.DTO.accommodation.*;
-import com.avanzada.alojamientos.DTO.other.DateRange;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 public interface AccommodationService {
@@ -20,5 +18,5 @@ public interface AccommodationService {
     void delete(Long accommodationId);
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
     // Métricas (reservas, promedio de calificaciones, filtrado por fechas)
-    AccommodationMetrics getMetrics(Long accommodationId, DateRange range);
+    AccommodationMetrics getMetrics(Long accommodationId, LocalDate start, LocalDate end);
 }

@@ -16,6 +16,9 @@ import java.util.Optional;
 
 public interface AccommodationRepository extends JpaRepository<AccommodationEntity, Long> {
 
+
+    Boolean existsByIdAndSoftDeletedFalse(Long id);
+
     /**
      * Busca un alojamiento por ID cargando eagerly las imágenes para evitar LazyInitializationException
      */
