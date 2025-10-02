@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.accommodation.*;
-import com.avanzada.alojamientos.DTO.other.DateRange;
+
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
@@ -12,6 +12,7 @@ import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
 import com.avanzada.alojamientos.exceptions.UploadingImageException;
 import com.avanzada.alojamientos.exceptions.DeletingImageException;
+import com.avanzada.alojamientos.repositories.ImageRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
     private final ImageService imageService;
+    private final ImageRepository imageRepository;
 
 
     @Override
@@ -139,9 +141,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
 
     @Override
-    public AccommodationMetrics getMetrics(Long accommodationId, DateRange range) {
-        validateMetricsParameters(accommodationId, range);
-
+    public AccommodationMetrics getMetrics(Long accommodationId, LocalDate start, LocalDate end) {
         // Cargar accommodation con reservations para calcular métricas de reservas y revenue
         AccommodationEntity accommodationWithReservations = accommodationRepository
                 .findByIdWithReservations(accommodationId)
@@ -154,9 +154,9 @@ public class AccommodationServiceImpl implements AccommodationService {
 
         List<ReservationEntity> reservations = getReservations(accommodationWithReservations);
 
-        long totalReservations = countValidReservations(reservations, range);
+        long totalReservations = countValidReservations(reservations, start, end);
         double averageRating = calculateAverageRating(accommodationWithComments);
-        BigDecimal totalRevenue = calculateTotalRevenue(reservations, range);
+        BigDecimal totalRevenue = calculateTotalRevenue(reservations, start, end);
 
         return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
     }
@@ -214,37 +214,30 @@ public class AccommodationServiceImpl implements AccommodationService {
 
 
     @Transactional
-    public void deleteImageFromCloudinary(Long accommodationId, String imageUrl) throws DeletingImageException {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            throw new DeletingImageException("imageUrl is required");
-        }
-        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
-        List<ImageEntity> currentImages = getCurrentImages(accommodation);
-
-        // Buscar la imagen por URL para obtener el public_id
-        Optional<ImageEntity> imageToDelete = currentImages.stream()
-                .filter(image -> imageUrl.equals(image.getUrl()))
-                .findFirst();
-
-        if (imageToDelete.isEmpty()) {
-            throw new DeletingImageException("Image not found in accommodation: " + imageUrl);
+    public void deleteImageFromCloudinary(Long accommodationId, Long imageId) throws DeletingImageException {
+        if (imageId == null) {
+            throw new DeletingImageException("imageId is required");
         }
 
-        ImageEntity image = imageToDelete.get();
+        // Verificar que el accommodation existe
+        if (!accommodationRepository.existsByIdAndSoftDeletedFalse(accommodationId)) {
+            throw new DeletingImageException("Accommodation not found with ID: " + accommodationId);
+        }
+
+        ImageEntity image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new DeletingImageException("Image not found with ID: " + imageId));
+
+        if (!Objects.equals(image.getAccommodation().getId(), accommodationId)) {
+            throw new DeletingImageException("Image does not belong to the specified accommodation");
+        }
 
         try {
-            // Eliminar de Cloudinary usando el public_id
             if (image.getCloudinaryPublicId() != null) {
                 imageService.delete(image.getCloudinaryPublicId());
             }
+            imageRepository.delete(image);
 
-            // Eliminar de la base de datos
-            List<ImageEntity> updatedImages = currentImages.stream()
-                    .filter(img -> !imageUrl.equals(img.getUrl()))
-                    .toList();
-
-            accommodation.setImages(updatedImages);
-            accommodationRepository.save(accommodation);
+            log.info("Successfully deleted image with ID {} from accommodation {}", imageId, accommodationId);
 
         } catch (DeletingImageException e) {
             log.error("Error deleting image from Cloudinary: {}", e.getMessage());
@@ -406,18 +399,13 @@ public class AccommodationServiceImpl implements AccommodationService {
         return image;
     }
 
-    private void validateMetricsParameters(Long accommodationId, DateRange range) {
-        if (accommodationId == null || range == null) {
-            throw new IllegalArgumentException("Accommodation id and range are required");
-        }
-    }
 
     private List<ReservationEntity> getReservations(AccommodationEntity accommodation) {
         return accommodation.getReservations() != null ? accommodation.getReservations() : Collections.emptyList();
     }
 
-    private long countValidReservations(List<ReservationEntity> reservations, DateRange range) {
-        return getValidReservationsStream(reservations, range).count();
+    private long countValidReservations(List<ReservationEntity> reservations, LocalDate start, LocalDate end) {
+        return getValidReservationsStream(reservations, start, end).count();
     }
 
     private double calculateAverageRating(AccommodationEntity accommodation) {
@@ -431,19 +419,17 @@ public class AccommodationServiceImpl implements AccommodationService {
                 .orElse(0.0);
     }
 
-    private BigDecimal calculateTotalRevenue(List<ReservationEntity> reservations, DateRange range) {
-        return getValidReservationsStream(reservations, range)
+    private BigDecimal calculateTotalRevenue(List<ReservationEntity> reservations, LocalDate start, LocalDate end) {
+        return getValidReservationsStream(reservations, start, end)
                 .map(ReservationEntity::getTotalPrice)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Stream<ReservationEntity> getValidReservationsStream(List<ReservationEntity> reservations, DateRange range) {
-        LocalDate startDate = range.startDate();
-        LocalDate endDate = range.endDate();
+    private Stream<ReservationEntity> getValidReservationsStream(List<ReservationEntity> reservations, LocalDate start, LocalDate end) {
 
         return reservations.stream()
-                .filter(reservation -> isReservationInDateRange(reservation, startDate, endDate))
+                .filter(reservation -> isReservationInDateRange(reservation, start, end))
                 .filter(this::isReservationNotCancelled);
     }
 
@@ -451,8 +437,24 @@ public class AccommodationServiceImpl implements AccommodationService {
         LocalDate reservationStart = reservation.getStartDate();
         LocalDate reservationEnd = reservation.getEndDate();
 
-        return reservationStart != null && !reservationStart.isAfter(rangeEnd)
-                && reservationEnd != null && !reservationEnd.isBefore(rangeStart);
+        if (reservationStart == null || reservationEnd == null) {
+            return false;
+        }
+
+        if (rangeStart == null && rangeEnd == null) {
+            return true;
+        }
+
+        if (rangeStart != null && rangeEnd == null) {
+            return !reservationEnd.isBefore(rangeStart);
+        }
+
+        if (rangeStart == null ) {
+            return !reservationStart.isAfter(rangeEnd);
+        }
+
+        // Si ambas fechas del rango están definidas, hacer la validación completa
+        return !reservationStart.isAfter(rangeEnd) && !reservationEnd.isBefore(rangeStart);
     }
 
     private boolean isReservationNotCancelled(ReservationEntity reservation) {

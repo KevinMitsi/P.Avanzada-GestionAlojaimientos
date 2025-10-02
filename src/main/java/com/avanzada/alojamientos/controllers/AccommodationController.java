@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -51,19 +52,12 @@ public class AccommodationController {
             @RequestParam(required = false) List<String> services,
             Pageable pageable) {
 
-        AccommodationSearch criteria = new AccommodationSearch(
-                cityId,
-                startDate != null ? LocalDate.parse(startDate) : null,
-                endDate != null ? LocalDate.parse(endDate) : null,
-                guests,
-                minPrice,
-                maxPrice,
-                services
-        );
-
-        Page<AccommodationDTO> result = accommodationService.search(criteria, pageable);
+        Page<AccommodationDTO> result = accommodationService.search(generateCriteria(cityId,
+                startDate, endDate, guests, minPrice, maxPrice, services), pageable);
         return ResponseEntity.ok(result);
     }
+
+
 
     @DeleteMapping("/{accommodationId}")
     public ResponseEntity<Void> delete(@PathVariable Long accommodationId) {
@@ -88,22 +82,20 @@ public class AccommodationController {
 
     }
 
-    @DeleteMapping("/{accommodationId}/images")
+    @DeleteMapping("/{accommodationId}/images/{imageId}")
     public ResponseEntity<Void> deleteImageFromCloudinary(@PathVariable Long accommodationId,
-                                           @RequestParam String imageUrl) {
-        try {
-            ((AccommodationServiceImpl) accommodationService)
-                    .deleteImageFromCloudinary(accommodationId, imageUrl);
-            return ResponseEntity.noContent().build();
-        } catch (DeletingImageException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+                                           @PathVariable Long imageId) throws DeletingImageException {
+
+        ((AccommodationServiceImpl) accommodationService).deleteImageFromCloudinary(accommodationId, imageId);
+        return ResponseEntity.noContent().build();
+       
     }
 
-    @PostMapping("/{accommodationId}/metrics")
+    @GetMapping("/{accommodationId}/metrics")
     public ResponseEntity<AccommodationMetrics> getMetrics(@PathVariable Long accommodationId,
-                                           @RequestBody DateRange range) {
-        AccommodationMetrics result = accommodationService.getMetrics(accommodationId, range);
+                                                           @RequestParam(name = "start", required = false) LocalDate startDate,
+                                                           @RequestParam(name = "end", required = false) LocalDate endDate){
+        AccommodationMetrics result = accommodationService.getMetrics(accommodationId, startDate, endDate);
         return ResponseEntity.ok(result);
     }
 
@@ -112,5 +104,17 @@ public class AccommodationController {
         Optional<AccommodationDTO> result = accommodationService.findById(accommodationId);
         return result.map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
+    }
+
+    private static AccommodationSearch generateCriteria(Long cityId, String startDate, String endDate, Integer guests, BigDecimal minPrice, BigDecimal maxPrice, List<String> services) {
+        return new AccommodationSearch(
+                cityId,
+                startDate != null ? LocalDate.parse(startDate) : null,
+                endDate != null ? LocalDate.parse(endDate) : null,
+                guests,
+                minPrice,
+                maxPrice,
+                services
+        );
     }
 }

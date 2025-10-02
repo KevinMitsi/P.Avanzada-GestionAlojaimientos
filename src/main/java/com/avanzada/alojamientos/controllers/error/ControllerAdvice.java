@@ -51,7 +51,7 @@ public class ControllerAdvice {
         return ResponseEntity.badRequest().body(error);
     }
 
-    // --- NUEVO: Error subiendo imagen ---
+
     @ExceptionHandler(UploadingImageException.class)
     public ResponseEntity<ResponseErrorDTO> handleUploadingImage(UploadingImageException ex) {
         ResponseErrorDTO error = new ResponseErrorDTO(
@@ -62,7 +62,7 @@ public class ControllerAdvice {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
-    // --- NUEVO: Error eliminando imagen ---
+
     @ExceptionHandler(DeletingImageException.class)
     public ResponseEntity<ResponseErrorDTO> handleDeletingImage(DeletingImageException ex) {
         ResponseErrorDTO error = new ResponseErrorDTO(

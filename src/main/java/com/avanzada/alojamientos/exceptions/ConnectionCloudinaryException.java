@@ -4,5 +4,6 @@ import java.io.IOException;
 
 public class ConnectionCloudinaryException extends IOException {
     public ConnectionCloudinaryException(String s) {
+        super(s);
     }
 }
