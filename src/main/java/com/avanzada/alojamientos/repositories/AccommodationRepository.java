@@ -16,10 +16,13 @@ import java.util.Optional;
 
 public interface AccommodationRepository extends JpaRepository<AccommodationEntity, Long> {
 
+
+    Boolean existsByIdAndSoftDeletedFalse(Long id);
+
     /**
      * Busca un alojamiento por ID cargando eagerly las imágenes para evitar LazyInitializationException
      */
-    @EntityGraph(attributePaths = {"images", "host", "city", "services", "reservations", "comments"})
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     @NonNull
     Optional<AccommodationEntity> findById(@NonNull Long id);
 
@@ -32,11 +35,12 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
      * <p>
      * No incluye filtrado por servicios; usar searchWithServices si se necesitan servicios exactos.
      */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     @Query("""
         SELECT a
         FROM AccommodationEntity a
         WHERE a.softDeleted = false
-          AND (:city IS NULL OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :city, '%')))
+          AND (:city IS NULL OR a.city.id = :city)
           AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
           AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
           AND (:guests IS NULL OR a.maxGuests >= :guests)
@@ -68,12 +72,13 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
      * y exige que el número de servicios distintos encontrados sea igual al tamaño del conjunto requerido,
      * esto asegura que el alojamiento contiene *todos* los servicios solicitados.
      */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     @Query("""
         SELECT a
         FROM AccommodationEntity a
         JOIN a.services s
         WHERE a.softDeleted = false
-          AND (:city IS NULL OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :city, '%')))
+          AND (:city IS NULL OR a.city.id = :city)
           AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
           AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
           AND (:guests IS NULL OR a.maxGuests >= :guests)
@@ -104,9 +109,31 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
     );
 
     /**
-     * Buscar alojamientos de un host (no eliminados)
+     * Buscar alojamientos de un host (no eliminados) - solo carga images y datos básicos
      */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     Page<AccommodationEntity> findByHostIdAndSoftDeletedFalse(Long hostId, Pageable pageable);
+
+    /**
+     * Método findAll con EntityGraph limitado para evitar MultipleBagFetchException
+     */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
+    @NonNull
+    Page<AccommodationEntity> findAll(@NonNull Pageable pageable);
+
+    /**
+     * Busca un alojamiento por ID con reservations para métricas
+     */
+    @EntityGraph(attributePaths = {"reservations", "host", "city"})
+    @Query("SELECT a FROM AccommodationEntity a WHERE a.id = :id")
+    Optional<AccommodationEntity> findByIdWithReservations(@Param("id") Long id);
+
+    /**
+     * Busca un alojamiento por ID con comments para métricas
+     */
+    @EntityGraph(attributePaths = {"comments", "host", "city"})
+    @Query("SELECT a FROM AccommodationEntity a WHERE a.id = :id")
+    Optional<AccommodationEntity> findByIdWithComments(@Param("id") Long id);
 
     /**
      * Contar reservas futuras no-canceladas para un alojamiento (útil para validar eliminación).
