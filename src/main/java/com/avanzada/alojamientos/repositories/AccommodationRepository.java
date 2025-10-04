@@ -52,7 +52,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
               )
         """)
     Page<AccommodationEntity> search(
-            @Param("city") String city,
+            @Param("city") Long city,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("guests") Integer guests,
@@ -92,7 +92,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         HAVING COUNT(DISTINCT s) = :servicesSize
         """)
     Page<AccommodationEntity> searchWithServices(
-            @Param("city") String city,
+            @Param("city") Long city,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("guests") Integer guests,

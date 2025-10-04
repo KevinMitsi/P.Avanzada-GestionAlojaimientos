@@ -8,6 +8,7 @@ import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import com.avanzada.alojamientos.services.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -35,17 +36,17 @@ public class ReservationController {
     }
 
     @GetMapping("/user/{userId}")
-    public Page<ReservationDTO> findByUser(@PathVariable Long userId, Pageable pageable) {
+    public Page<ReservationDTO> findByUser(@PathVariable Long userId,  @ParameterObject Pageable pageable) {
         return reservationService.findByUser(userId, pageable);
     }
 
     @GetMapping("/accommodation/{accommodationId}")
-    public Page<ReservationDTO> findByAccommodation(@PathVariable Long accommodationId, Pageable pageable) {
+    public Page<ReservationDTO> findByAccommodation(@PathVariable Long accommodationId, @ParameterObject Pageable pageable) {
         return reservationService.findByAccommodation(accommodationId, pageable);
     }
 
     @PostMapping("/search")
-    public Page<ReservationDTO> search(@RequestBody ReservationSearchCriteria criteria, Pageable pageable) {
+    public Page<ReservationDTO> search(@RequestBody ReservationSearchCriteria criteria, @ParameterObject Pageable pageable) {
         return reservationService.searchReservations(criteria, pageable);
     }
 
