@@ -2,6 +2,8 @@ package com.avanzada.alojamientos.mappers;
 
 import com.avanzada.alojamientos.DTO.comment.CreateCommentDTO;
 import com.avanzada.alojamientos.DTO.comment.CommentDTO;
+import com.avanzada.alojamientos.DTO.host.ReplyHostDTO;
+import com.avanzada.alojamientos.DTO.model.HostReply;
 import com.avanzada.alojamientos.entities.CommentEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,7 +16,10 @@ public interface CommentMapper {
     @Mapping(source = "reservation.id", target = "reservationId")
     @Mapping(source = "accommodation.id", target = "accommodationId")
     @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "rating", target = "rating")
     @Mapping(source = "text", target = "text")
+    @Mapping(source = "createdAt", target = "createdAt")
+    @Mapping(source = "isModerated", target = "isModerated")
     @Mapping(source = "hostReply", target = "hostReply")
     CommentDTO toCommentDTO(CommentEntity comment);
 
@@ -29,5 +34,12 @@ public interface CommentMapper {
     @Mapping(target = "user", ignore = true) // Se asignará en el servicio
     @Mapping(target = "hostReply", ignore = true)
     @Mapping(source = "text", target = "text")
+    @Mapping(source = "rating", target = "rating")
     CommentEntity toEntity(CreateCommentDTO createCommentDTO);
+
+    // Mapear HostReply a ReplyHostDTO
+    @Mapping(source = "hostId", target = "hostId")
+    @Mapping(source = "reply", target = "text")
+    @Mapping(source = "replyAt", target = "createdAt")
+    ReplyHostDTO toReplyHostDTO(HostReply hostReply);
 }

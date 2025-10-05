@@ -2,6 +2,7 @@ package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.accommodation.*;
 
+import com.avanzada.alojamientos.exceptions.SearchingAccommodationException;
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
@@ -220,7 +221,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         }
 
         // Verificar que el accommodation existe
-        if (!accommodationRepository.existsByIdAndSoftDeletedFalse(accommodationId)) {
+        if (Boolean.FALSE.equals(accommodationRepository.existsByIdAndSoftDeletedFalse(accommodationId))) {
             throw new DeletingImageException("Accommodation not found with ID: " + accommodationId);
         }
 
@@ -279,34 +280,63 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     private Page<AccommodationEntity> performSearch(AccommodationSearch criteria, Pageable pageable) {
-        try {
-            if (hasServicesFilter(criteria)) {
-                return accommodationRepository.searchWithServices(
-                        criteria.cityId(),
-                        criteria.minPrice(),
-                        criteria.maxPrice(),
-                        criteria.guests(),
-                        criteria.startDate(),
-                        criteria.endDate(),
-                        criteria.services(),
-                        criteria.services().size(),
-                        pageable
-                );
-            } else {
-                return accommodationRepository.search(
-                        criteria == null ? null : criteria.cityId(),
-                        criteria == null ? null : criteria.minPrice(),
-                        criteria == null ? null : criteria.maxPrice(),
-                        criteria == null ? null : criteria.guests(),
-                        criteria == null ? null : criteria.startDate(),
-                        criteria == null ? null : criteria.endDate(),
-                        pageable
-                );
+        Page<AccommodationEntity> entityPage;
+        if (hasServicesFilter(criteria)) {
+            log.debug("Searching accommodations with services filter: {}", criteria.services());
+            try {
+                entityPage = createCriteriaAndSearch(criteria, pageable, false);
+            } catch (Exception ex) {
+                log.error("Error executing searchWithServices query with criteria: {}. Error: {}", criteria, ex.getMessage(), ex);
+                throw new SearchingAccommodationException("Error searching accommodations with services filter "+  ex);
             }
-        } catch (Exception ex) {
-            log.debug("Repository search methods not available or failed, falling back to findAll(pageable). Reason: {}", ex.getMessage());
-            return accommodationRepository.findAll(pageable);
+        } else {
+            log.debug("Searching accommodations without services filter");
+            try {
+                entityPage = createCriteriaAndSearch(criteria, pageable, true);
+            } catch (Exception ex) {
+                log.error("Error executing search query with criteria: {}. Error: {}", criteria, ex.getMessage(), ex);
+                throw new SearchingAccommodationException("Error searching accommodations " + ex);
+            }
         }
+
+        return entityPage;
+    }
+
+    private Page<AccommodationEntity> createCriteriaAndSearch(AccommodationSearch criteria, Pageable pageable, boolean withoutServices) {
+       if (withoutServices){
+           return accommodationRepository.search(
+                   criteria == null ? null : criteria.cityId(),
+                   criteria == null ? null : criteria.minPrice(),
+                   criteria == null ? null : criteria.maxPrice(),
+                   criteria == null ? null : criteria.guests(),
+                   criteria == null ? null : criteria.startDate(),
+                   criteria == null ? null : criteria.endDate(),
+                   pageable
+           );
+       }
+
+       // Para búsqueda con servicios, usar la nueva aproximación de dos consultas
+       List<Long> accommodationIds = accommodationRepository.findAccommodationIdsWithServices(
+               criteria.cityId(),
+               criteria.minPrice(),
+               criteria.maxPrice(),
+               criteria.guests(),
+               criteria.startDate(),
+               criteria.endDate(),
+               criteria.services(),
+               criteria.services().size(),
+               pageable
+       );
+
+       if (accommodationIds.isEmpty()) {
+           return Page.empty(pageable);
+       }
+
+       // Cargar las entidades completas con EntityGraph
+       List<AccommodationEntity> accommodations = accommodationRepository.findByIdsWithEntityGraph(accommodationIds);
+
+       // Crear una Page manualmente
+       return new PageImpl<>(accommodations, pageable, accommodations.size());
     }
 
     private boolean hasServicesFilter(AccommodationSearch criteria) {

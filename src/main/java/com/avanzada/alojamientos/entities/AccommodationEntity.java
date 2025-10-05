@@ -41,7 +41,7 @@ public class AccommodationEntity {
             columnDefinition = "DECIMAL(10,2) CHECK (price_per_night > 0)")
     private BigDecimal pricePerNight;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "accommodation_services",
             joinColumns = @JoinColumn(
