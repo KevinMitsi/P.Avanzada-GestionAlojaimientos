@@ -27,9 +27,9 @@ public class ImageServiceImpl implements ImageService {
     private final String apiSecret;
     private final Cloudinary cloudinary;
 
-    public ImageServiceImpl(@Value("${cloudinary.cloud_name}") String cloudName,
-                           @Value("${cloudinary.api_key}") String apiKey,
-                           @Value("${cloudinary.api_secret}") String apiSecret) {
+    public ImageServiceImpl(@Value("${cloudinary.cloud-name}") String cloudName,
+                           @Value("${cloudinary.api-key}") String apiKey,
+                           @Value("${cloudinary.api-secret}") String apiSecret) {
         this.cloudName = cloudName;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;

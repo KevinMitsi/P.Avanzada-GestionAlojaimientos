@@ -35,6 +35,57 @@ public class ControllerAdvice {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    // Excepciones de reservas
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ResponseErrorDTO> handleReservationNotFoundException(ReservationNotFoundException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.NOT_FOUND.value(),
+                "Reserva no encontrada",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(ReservationValidationException.class)
+    public ResponseEntity<ResponseErrorDTO> handleReservationValidationException(ReservationValidationException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                "Error de validación en la reserva",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ReservationPermissionException.class)
+    public ResponseEntity<ResponseErrorDTO> handleReservationPermissionException(ReservationPermissionException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.FORBIDDEN.value(),
+                "Permisos insuficientes para esta operación de reserva",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(ReservationStateException.class)
+    public ResponseEntity<ResponseErrorDTO> handleReservationStateException(ReservationStateException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.CONFLICT.value(),
+                "Estado de reserva inválido para esta operación",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ReservationAvailabilityException.class)
+    public ResponseEntity<ResponseErrorDTO> handleReservationAvailabilityException(ReservationAvailabilityException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.CONFLICT.value(),
+                "Alojamiento no disponible",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     // Excepciones de entidades no encontradas
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ResponseErrorDTO> handleUserNotFoundException(UserNotFoundException ex) {
@@ -199,6 +250,15 @@ public class ControllerAdvice {
         return ResponseEntity.badRequest().body(error);
     }
 
+    @ExceptionHandler(NotificationNotFoundException.class)
+    public ResponseEntity<ResponseErrorDTO> handleNotificationNotFoundException(NotificationNotFoundException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.NOT_FOUND.value(),
+                "Notificación no encontrada",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
     // Manejador para validaciones de constrains a nivel de params
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ResponseErrorDTO> handleConstraintViolationException(ConstraintViolationException ex) {
@@ -260,4 +320,5 @@ public class ControllerAdvice {
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
 }
