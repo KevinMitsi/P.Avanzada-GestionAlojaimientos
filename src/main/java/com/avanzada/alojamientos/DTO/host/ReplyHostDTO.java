@@ -6,6 +6,5 @@ public record ReplyHostDTO(
         Long hostId,
         String text,
         LocalDateTime createdAt
-
 ) {
 }

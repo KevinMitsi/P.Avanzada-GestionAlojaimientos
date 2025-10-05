@@ -67,14 +67,13 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
 
     /**
      * Búsqueda que filtra también por servicios.
-     * Se espera que `a.services` sea una colección (por ejemplo Set<String> o entidad embebida)
+     * Se espera que `a. services` sea una colección (por ejemplo Set<String> o entidad embebida)
      * y que se pase la lista de servicios requeridos en 'services'. La consulta agrupa por alojamiento
      * y exige que el número de servicios distintos encontrados sea igual al tamaño del conjunto requerido,
      * esto asegura que el alojamiento contiene *todos* los servicios solicitados.
      */
-    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     @Query("""
-        SELECT a
+        SELECT a.id
         FROM AccommodationEntity a
         JOIN a.services s
         WHERE a.softDeleted = false
@@ -93,10 +92,10 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
                 )
               )
           AND s IN :services
-        GROUP BY a
+        GROUP BY a.id
         HAVING COUNT(DISTINCT s) = :servicesSize
         """)
-    Page<AccommodationEntity> searchWithServices(
+    List<Long> findAccommodationIdsWithServices(
             @Param("city") Long city,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
@@ -107,6 +106,13 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
             @Param("servicesSize") long servicesSize,
             Pageable pageable
     );
+
+    /**
+     * Buscar alojamientos por ID con EntityGraph
+     */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
+    @Query("SELECT a FROM AccommodationEntity a WHERE a.id IN :ids")
+    List<AccommodationEntity> findByIdsWithEntityGraph(@Param("ids") List<Long> ids);
 
     /**
      * Buscar alojamientos de un host (no eliminados) - solo carga images y datos básicos

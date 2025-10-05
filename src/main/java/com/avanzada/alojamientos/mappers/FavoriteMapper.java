@@ -6,12 +6,11 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {FavoriteAccommodationMapper.class})
 public interface FavoriteMapper {
 
-    @Mapping(source = "id", target = "id", numberFormat = "#")
-    @Mapping(source = "user.id", target = "userId", numberFormat = "#")
-    @Mapping(source = "accommodation.id", target = "accommodationId", numberFormat = "#")
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "accommodation", target = "accommodation")
     @Mapping(source = "createdAt", target = "createdA", dateFormat = "yyyy-MM-dd'T'HH:mm:ss")
     FavoriteDTO toDTO(FavoriteEntity entity);
 
