@@ -1,4 +1,9 @@
 spring:
+  security:
+    user:
+      name: ${SECURITY_USER_NAME:admin}
+      password: ${SECURITY_USER_PASSWORD:admin}
+
   application:
     name: alojamientos
   datasource:
@@ -25,3 +30,16 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:dygl0ond3}
   api-key: ${CLOUDINARY_API_KEY:355884264733534}
   api-secret: ${CLOUDINARY_API_SECRET:6Ty9-KX9qPI0YpnINa5yPVfn06A}
+
+# JWT Configuration
+jwt:
+  secret: mySecretKeyForJwtTokenGenerationThatShouldBeVeryLongAndSecure123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+  expiration: 8640000
+
+
+
+# Logging para debugging (opcional)
+logging:
+  level:
+    com.avanzada.alojamientos.security: DEBUG
+    org.springframework.security: DEBUG
