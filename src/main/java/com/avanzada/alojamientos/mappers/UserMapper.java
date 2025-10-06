@@ -33,6 +33,8 @@ public interface UserMapper {
     @Mapping(target = "avatarUrl", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
+    @Mapping(target = "dateOfBirth", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     UserEntity toEntity(CreateUserDTO createUserDTO);
 
     // Register DTO -> Entity
@@ -51,6 +53,7 @@ public interface UserMapper {
     @Mapping(target = "avatarUrl", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     UserEntity toEntity(RegisterUserDTO registerUserDTO);
 
     // Update Entity from EditUserDTO
@@ -72,6 +75,7 @@ public interface UserMapper {
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
     @Mapping(target = "dateOfBirth", source = "dateBirth")
+    @Mapping(target = "roles", ignore = true)
     void updateEntityFromDTO(EditUserDTO editUserDTO, @MappingTarget UserEntity user);
 
 }

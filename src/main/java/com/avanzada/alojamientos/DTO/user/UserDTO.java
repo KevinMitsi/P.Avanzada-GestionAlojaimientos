@@ -5,6 +5,7 @@ import com.avanzada.alojamientos.DTO.model.UserRole;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 public record UserDTO(
         Long id,
@@ -12,7 +13,7 @@ public record UserDTO(
         String email,
         String phone,
         LocalDate dateOfBirth,
-        UserRole role,
+        Set<UserRole> roles,
         String avatarUrl,
         String description,
         List<String> documentsUrl,

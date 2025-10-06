@@ -35,6 +35,17 @@ public class ControllerAdvice {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    // Manejo de credenciales inválidas
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ResponseErrorDTO> handleInvalidPasswordException(InvalidPasswordException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Credenciales inválidas",
+                Map.of(KEY_IN_MAP, ex.getMessage(), "tipo", "InvalidPasswordException")
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     // Excepciones de reservas
     @ExceptionHandler(ReservationNotFoundException.class)
     public ResponseEntity<ResponseErrorDTO> handleReservationNotFoundException(ReservationNotFoundException ex) {

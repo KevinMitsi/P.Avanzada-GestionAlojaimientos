@@ -45,6 +45,8 @@ public interface AccommodationMapper {
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "reservations", ignore = true)
     @Mapping(target = "comments", ignore = true)
+    @Mapping(target = "favorites", ignore = true)
+    @Mapping(target = "countReservations", ignore = true)
     @Mapping(target = "softDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

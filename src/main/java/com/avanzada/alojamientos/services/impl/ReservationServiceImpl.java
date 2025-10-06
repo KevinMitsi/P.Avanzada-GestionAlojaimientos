@@ -66,7 +66,7 @@ public class ReservationServiceImpl implements ReservationService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.USER) {
+        if (!user.hasRole(UserRole.USER)) {
             throw new ReservationPermissionException("Only users with role USER can make reservations");
         }
 

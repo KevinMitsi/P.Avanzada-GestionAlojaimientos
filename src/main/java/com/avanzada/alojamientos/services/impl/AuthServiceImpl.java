@@ -60,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(),
                 user.getEmail(),
                 user.getName(),
-                user.getRole(),
+                user.getRoles(),
                 Boolean.TRUE.equals(user.getVerified()),
                 (user.getHostProfile() != null) && Boolean.TRUE.equals(user.getHostProfile().getVerified())
             );
@@ -91,7 +91,7 @@ public class AuthServiceImpl implements AuthService {
             user.getId(),
             user.getEmail(),
             user.getName(),
-            user.getRole(),
+            user.getRoles(),
             Boolean.TRUE.equals(user.getVerified()),
             (user.getHostProfile() != null) && Boolean.TRUE.equals(user.getHostProfile().getVerified())
         );
@@ -144,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(),
                 user.getEmail(),
                 user.getName(),
-                user.getRole(),
+                user.getRoles(),
                 Boolean.TRUE.equals(user.getVerified()),
                 (user.getHostProfile() != null) && Boolean.TRUE.equals(user.getHostProfile().getVerified())
             );
