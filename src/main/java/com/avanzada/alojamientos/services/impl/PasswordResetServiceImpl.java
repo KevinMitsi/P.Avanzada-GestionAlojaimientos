@@ -4,20 +4,21 @@ import com.avanzada.alojamientos.DTO.auth.PasswordResetDto;
 import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
 import com.avanzada.alojamientos.entities.PasswordResetTokenEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
+import com.avanzada.alojamientos.exceptions.InvalidTokenException;
 import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.repositories.PasswordResetTokenRepository;
 import com.avanzada.alojamientos.repositories.UserRepository;
+import com.avanzada.alojamientos.security.CustomUserDetailsService;
+import com.avanzada.alojamientos.security.JwtService;
 import com.avanzada.alojamientos.services.PasswordResetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
@@ -29,52 +30,47 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final CustomUserDetailsService userDetailsService;
 
-    private static final int TOKEN_LENGTH = 6;
-    private static final int TOKEN_EXPIRATION_MINUTES = 15;
+    private static final long TOKEN_EXPIRATION_MINUTES = 15;
 
     @Override
     @Transactional
     public void requestReset(PasswordResetRequestDTO dto) {
-        log.info("Password reset requested for email: {}", dto.email());
+        log.info(" Solicitud de recuperación para: {}", dto.email());
 
-        // 1. Buscar usuario por email
+        // 1. Buscar usuario
         UserEntity user = userRepository.findByEmail(dto.email())
-                .orElseThrow(() -> new UserNotFoundException("There is no user with the email: " + dto.email()));
+                .orElseThrow(() -> new UserNotFoundException("No existe un usuario con el correo: " + dto.email()));
 
-        // 2. Validar que el usuario esté habilitado
+        // 2. Validar si está habilitado
         if (Boolean.FALSE.equals(user.getEnabled())) {
-            throw new UnauthorizedException("The account is disabled");
+            throw new UnauthorizedException("La cuenta está deshabilitada");
         }
 
-        // 3. Invalidar tokens anteriores del usuario (marcarlos como usados)
-        invalidatePreviousTokens(user);
+        // 3. Invalidar tokens anteriores
+        tokenRepository.findByUserAndUsedFalse(user).forEach(token -> {
+            token.setUsed(true);
+            tokenRepository.save(token);
+        });
 
-        // 4. Generar código de recuperación (6 dígitos)
-        String recoveryCode = generateRecoveryCode();
+        // 4. Generar token JWT
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String jwtToken = jwtService.generateToken(userDetails);
 
-        // 5. Crear hash del código para almacenar en BD
-        String tokenHash = hashToken(recoveryCode);
-
-        // 6. Crear entidad del token
+        // 5. Guardar en BD
         PasswordResetTokenEntity tokenEntity = new PasswordResetTokenEntity();
         tokenEntity.setUser(user);
-        tokenEntity.setTokenHash(tokenHash);
+        tokenEntity.setTokenHash(jwtToken);
         tokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(TOKEN_EXPIRATION_MINUTES));
         tokenEntity.setUsed(false);
-        tokenEntity.setCreatedAt(LocalDateTime.now());
-
         tokenRepository.save(tokenEntity);
 
-        log.info("Password reset token created for user ID: {} - Token expires at: {}",
-                user.getId(), tokenEntity.getExpiresAt());
+        log.info(" Token JWT generado para restablecimiento (expira en {} minutos)", TOKEN_EXPIRATION_MINUTES);
 
-        // TODO: Enviar email con el código de recuperación
-
-
-        // TEMPORAL: Imprimir código en consola para pruebas
-        log.warn("⚠️ CÓDIGO DE RECUPERACIÓN (solo para desarrollo): {}", recoveryCode);
-        log.warn("⚠️ Este código expira en {} minutos", TOKEN_EXPIRATION_MINUTES);
+        // 6. Aquí va la lógica para enviar el correo con el token JWT
+        // TODO: Implementar envío de correo con el token de recuperación
     }
 
 
@@ -83,71 +79,43 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     @Transactional
     public void resetPassword(PasswordResetDto dto) {
+        log.info("Intentando restablecer la contraseña...");
 
-        log.info("Attempting password reset with provided token");
+        String userEmail;
 
-        // 1. Crear hash del token recibido
-        String tokenHash = hashToken(dto.token());
-
-        // 2. Buscar token válido en la BD
-        PasswordResetTokenEntity tokenEntity = tokenRepository
-                .findByTokenHashAndUsedFalse(tokenHash)
-                .orElseThrow(() -> new UnauthorizedException("Invalid recovery code"));
-
-        // 3. Validar que el token no haya expirado
-        if (tokenEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new UnauthorizedException("The recovery code has expired. Request a new one.");
+        // 1. Extraer el email del token JWT
+        try {
+            userEmail = jwtService.extractUsername(dto.token());
+        } catch (Exception e) {
+            throw new InvalidTokenException("El token de recuperación es inválido o está corrupto");
         }
 
-        // 4. Obtener usuario asociado al token
-        UserEntity user = tokenEntity.getUser();
+        // 2. Buscar usuario asociado
+        UserEntity user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con el token proporcionado"));
 
-        // 5. Actualizar contraseña del usuario
+        // 3. Buscar el token activo en la BD
+        PasswordResetTokenEntity tokenEntity = tokenRepository.findByTokenHashAndUsedFalse(dto.token())
+                .orElseThrow(() -> new InvalidTokenException("El token de recuperación ya fue usado o no existe"));
+
+        // 4. Validar expiración
+        if (tokenEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new InvalidTokenException("El token de recuperación ha expirado. Solicita uno nuevo.");
+        }
+
+        // 5. Actualizar contraseña
         user.setPassword(passwordEncoder.encode(dto.newPassword()));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // 6. Marcar el token como usado
+        // 6. Marcar token como usado
         tokenEntity.setUsed(true);
         tokenRepository.save(tokenEntity);
 
-        log.info("Password successfully reset for user ID: {}", user.getId());
+        log.info(" Contraseña restablecida correctamente para {}", user.getEmail());
 
-        // TODO: Enviar email de confirmación
-
-
-
-
-
-    }
-
-    private void invalidatePreviousTokens(UserEntity user) {
-        tokenRepository.findByUserAndUsedFalse(user)
-                .forEach(token -> {
-                    token.setUsed(true);
-                    tokenRepository.save(token);
-                    log.debug("Invalidated previous token for user ID: {}", user.getId());
-                });
-    }
-
-    private String generateRecoveryCode() {
-        SecureRandom random = new SecureRandom();
-        int code = 100000 + random.nextInt(900000); // Genera número entre 100000 y 999999
-        return String.valueOf(code);
-    }
-
-    /**
-     * Crea un hash SHA-256 del token para almacenarlo de forma segura
-     */
-    private String hashToken(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes());
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Error hashing token", e);
-            throw new RuntimeException("Error processing recovery token");
-        }
+        // 7. Aquí va la lógica para enviar el correo de confirmación
+        // TODO: Implementar envío de correo de confirmación de restablecimiento
     }
 
 }
