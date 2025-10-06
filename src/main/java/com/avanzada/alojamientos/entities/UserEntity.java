@@ -52,7 +52,7 @@ public class UserEntity {
     @Column(nullable = false)
     private String description;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_documents", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "document_url")
     private List<String> documentsUrl = new ArrayList<>();
