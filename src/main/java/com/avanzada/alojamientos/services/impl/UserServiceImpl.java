@@ -49,8 +49,13 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(dto.password()));
 
         // Establecer rol por defecto como USER si no se especifica
-        if (user.getRole() == null) {
-            user.setRole(UserRole.USER);
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            user.addRole(UserRole.USER);
+        }
+
+        // Establecer descripción por defecto
+        if (user.getDescription() == null || user.getDescription().trim().isEmpty()) {
+            user.setDescription("Usuario registrado en la plataforma");
         }
 
         // Establecer valores por defecto
@@ -188,10 +193,10 @@ public class UserServiceImpl implements UserService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
 
-        // Si ya tiene perfil de host, solo asegurar rol y devolver
+        // Si ya tiene perfil de host, solo asegurar rol HOST y devolver
         if (user.getHostProfile() != null) {
-            if (user.getRole() != UserRole.HOST) {
-                user.setRole(UserRole.HOST);
+            if (!user.hasRole(UserRole.HOST)) {
+                user.addRole(UserRole.HOST);
                 user.setUpdatedAt(LocalDateTime.now());
                 user = userRepository.save(user);
             }
@@ -206,7 +211,8 @@ public class UserServiceImpl implements UserService {
 
         // Sincronizar lado inverso también
         user.setHostProfile(profile);
-        user.setRole(UserRole.HOST);
+        // Agregar rol HOST manteniendo los roles existentes
+        user.addRole(UserRole.HOST);
         user.setUpdatedAt(LocalDateTime.now());
 
         // Persistir perfil (lado propietario) primero para asegurar FK

@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -41,9 +43,12 @@ public class UserEntity {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    // Cambio: roles múltiples en lugar de un solo rol
+    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private UserRole role;
+    @Column(name = "role")
+    private Set<UserRole> roles = new HashSet<>();
 
     @Column(length = 500)
     private String avatarUrl;
@@ -90,9 +95,44 @@ public class UserEntity {
     @OneToOne(mappedBy = "host", cascade = CascadeType.ALL)
     private HostProfileEntity hostProfile;
 
+    // Métodos de conveniencia para manejar roles
+    public void addRole(UserRole role) {
+        if (this.roles == null) {
+            this.roles = new HashSet<>();
+        }
+        this.roles.add(role);
+    }
+
+    public void removeRole(UserRole role) {
+        if (this.roles != null) {
+            this.roles.remove(role);
+        }
+    }
+
+    public boolean hasRole(UserRole role) {
+        return this.roles != null && this.roles.contains(role);
+    }
+
+    public boolean isHost() {
+        return hasRole(UserRole.HOST);
+    }
+
+    public boolean isUser() {
+        return hasRole(UserRole.USER);
+    }
+
+    public boolean isAdmin() {
+        return hasRole(UserRole.ADMIN);
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        // Asegurar que todo usuario tenga al menos el rol USER
+        if (roles == null || roles.isEmpty()) {
+            roles = new HashSet<>();
+            roles.add(UserRole.USER);
+        }
     }
 
     @PreUpdate

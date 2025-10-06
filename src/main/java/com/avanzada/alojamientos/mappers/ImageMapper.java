@@ -17,5 +17,7 @@ public interface ImageMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "accommodation", ignore = true)
     @Mapping(target = "isPrimary", constant = "false")
+    @Mapping(target = "cloudinaryPublicId", ignore = true)
+    @Mapping(target = "cloudinaryThumbnailUrl", ignore = true)
     ImageEntity toEntity(ImageDTO imageDTO);
 }

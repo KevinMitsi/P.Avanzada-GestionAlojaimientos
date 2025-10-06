@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.security;
 
 import com.avanzada.alojamientos.entities.UserEntity;
+import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -16,7 +17,7 @@ public class CurrentUserService {
     public String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("No hay usuario autenticado en el contexto");
+            throw new UserNotFoundException("No hay usuario autenticado en el contexto");
         }
         return authentication.getName(); // username = email
     }
@@ -24,7 +25,7 @@ public class CurrentUserService {
     public UserEntity getCurrentUser() {
         String email = getCurrentUserEmail();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Usuario actual no encontrado: " + email));
+                .orElseThrow(() -> new UserNotFoundException("Usuario actual no encontrado: " + email));
     }
 
     public Long getCurrentUserId() {
