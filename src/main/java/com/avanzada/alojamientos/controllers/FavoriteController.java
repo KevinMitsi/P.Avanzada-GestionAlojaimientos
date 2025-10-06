@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.controllers;
 
 import com.avanzada.alojamientos.DTO.other.FavoriteDTO;
+import com.avanzada.alojamientos.security.CurrentUserService;
 import com.avanzada.alojamientos.services.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +15,11 @@ import java.util.List;
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/{userId}/{accommodationId}")
-    public ResponseEntity<FavoriteDTO> add(@PathVariable Long userId, @PathVariable Long accommodationId) {
+    @PostMapping("/{accommodationId}")
+    public ResponseEntity<FavoriteDTO> add(@PathVariable Long accommodationId) {
+        Long userId = currentUserService.getCurrentUserId();
         return ResponseEntity.ok(favoriteService.add(userId, accommodationId));
     }
 
@@ -26,8 +29,9 @@ public class FavoriteController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<FavoriteDTO>> findByUser(@PathVariable Long userId) {
+    @GetMapping("/user/me")
+    public ResponseEntity<List<FavoriteDTO>> findByUser() {
+        Long userId = currentUserService.getCurrentUserId();
         return ResponseEntity.ok(favoriteService.findByUser(userId));
     }
 }

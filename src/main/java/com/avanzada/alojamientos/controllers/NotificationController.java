@@ -3,6 +3,7 @@ package com.avanzada.alojamientos.controllers;
 import com.avanzada.alojamientos.DTO.notification.CreateNotificationDTO;
 import com.avanzada.alojamientos.DTO.notification.EmailDTO;
 import com.avanzada.alojamientos.DTO.notification.NotificationDTO;
+import com.avanzada.alojamientos.security.CurrentUserService;
 import com.avanzada.alojamientos.services.EmailNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +23,7 @@ import java.util.Optional;
 public class NotificationController {
 
     private final EmailNotificationService notificationService;
+    private final CurrentUserService currentUserService;
 
     @PostMapping
     @Operation(summary = "Crear una nueva notificación")
@@ -41,9 +43,10 @@ public class NotificationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Obtener notificaciones de un usuario")
-    public ResponseEntity<List<NotificationDTO>> getNotificationsByUser(@PathVariable Long userId) {
+    @GetMapping("/user/me")
+    @Operation(summary = "Obtener notificaciones del usuario actual")
+    public ResponseEntity<List<NotificationDTO>> getNotificationsByCurrentUser() {
+        Long userId = currentUserService.getCurrentUserId();
         List<NotificationDTO> notifications = notificationService.findByUser(userId);
         return ResponseEntity.ok(notifications);
     }

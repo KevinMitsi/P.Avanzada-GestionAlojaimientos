@@ -76,7 +76,7 @@ public class AuthController {
      * Convertirse en HOST - cualquier usuario autenticado puede hacerlo
      */
     @PostMapping("/become-host")
-    @PreAuthorize("isAuthenticated() and hasRole('USER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDTO> becomeHost() {
         log.info("Usuario solicitando convertirse en HOST");
         UserDTO updatedUser = authService.becomeHost();

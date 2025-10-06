@@ -37,41 +37,36 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponseDTO login(LoginRequestDTO loginRequest) {
-        log.info("Intentando autenticar usuario: {}", loginRequest.email());
-
         try {
-            // Autenticar con Spring Security
+            log.info("Intentando autenticar usuario: {}", loginRequest.email());
+
+            // Autenticar usando Spring Security
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.email(),
-                            loginRequest.password()
-                    )
+                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
             );
 
-            // Obtener detalles del usuario autenticado
+            // Obtener detalles del usuario
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             UserEntity user = userDetailsService.getUserEntityByEmail(userDetails.getUsername());
 
-            // Generar token JWT
+            // Generar token JWT (único token soportado por JwtService actual)
             String token = jwtService.generateToken(userDetails);
-
-            // Verificar si es host verificado
-            boolean isHostVerified = userService.isVerifiedHost(user.getId());
 
             log.info("Usuario autenticado exitosamente: {}", loginRequest.email());
 
+            // Construir respuesta según AuthResponseDTO disponible
             return new AuthResponseDTO(
-                    token,
-                    user.getId(),
-                    user.getEmail(),
-                    user.getName(),
-                    user.getRole(),
-                    user.getVerified(),
-                    isHostVerified
+                token,
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                Boolean.TRUE.equals(user.getVerified()),
+                (user.getHostProfile() != null) && Boolean.TRUE.equals(user.getHostProfile().getVerified())
             );
 
         } catch (BadCredentialsException e) {
-            log.warn("Intento de login fallido para: {}", loginRequest.email());
+            log.warn("Credenciales inválidas para: {}", loginRequest.email());
             throw new InvalidPasswordException("Credenciales inválidas");
         }
     }
@@ -80,27 +75,25 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDTO register(RegisterUserDTO registerRequest) {
         log.info("Registrando nuevo usuario: {}", registerRequest.email());
+        userService.register(registerRequest);
 
-        // Registrar usuario usando el servicio existente
-        UserDTO userDTO = userService.register(registerRequest);
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(registerRequest.email(), registerRequest.password())
+        );
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserEntity user = userDetailsService.getUserEntityByEmail(userDetails.getUsername());
 
-        // Autenticar inmediatamente después del registro
-        UserDetails userDetails = userDetailsService.loadUserByUsername(registerRequest.email());
         String token = jwtService.generateToken(userDetails);
-
-        // Verificar si es host verificado (será false para nuevos registros)
-        boolean isHostVerified = userService.isVerifiedHost(userDTO.id());
-
-        log.info("Usuario registrado y autenticado exitosamente: {}", registerRequest.email());
+        log.info("Usuario registrado y autenticado: {}", registerRequest.email());
 
         return new AuthResponseDTO(
-                token,
-                userDTO.id(),
-                userDTO.email(),
-                userDTO.name(),
-                userDTO.role(),
-                userDTO.verified(),
-                isHostVerified
+            token,
+            user.getId(),
+            user.getEmail(),
+            user.getName(),
+            user.getRole(),
+            Boolean.TRUE.equals(user.getVerified()),
+            (user.getHostProfile() != null) && Boolean.TRUE.equals(user.getHostProfile().getVerified())
         );
     }
 
@@ -122,40 +115,42 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout() {
-        // En una implementación con JWT stateless, el logout se maneja en el cliente
-        // eliminando el token. Aquí podemos limpiar el contexto de seguridad
         SecurityContextHolder.clearContext();
         log.info("Usuario deslogueado exitosamente");
     }
 
     @Override
     public AuthResponseDTO refreshToken(String refreshToken) {
-        // Implementación de refresh token (opcional para esta versión)
-        // Por ahora, solo validamos el token existente
         try {
+            log.info("Intentando renovar token");
+
             String email = jwtService.extractUsername(refreshToken);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-            if (jwtService.isTokenValid(refreshToken, userDetails)) {
-                UserEntity user = userDetailsService.getUserEntityByEmail(email);
-                String newToken = jwtService.generateToken(userDetails);
-                boolean isHostVerified = userService.isVerifiedHost(user.getId());
-
-                return new AuthResponseDTO(
-                        newToken,
-                        user.getId(),
-                        user.getEmail(),
-                        user.getName(),
-                        user.getRole(),
-                        user.getVerified(),
-                        isHostVerified
-                );
-            } else {
-                throw new InvalidPasswordException("Token inválido o expirado");
+            if (email == null) {
+                throw new InvalidPasswordException("Token inválido");
             }
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            if (!jwtService.isTokenValid(refreshToken, userDetails)) {
+                throw new InvalidPasswordException("Token inválido");
+            }
+
+            String newToken = jwtService.generateToken(userDetails);
+            UserEntity user = userDetailsService.getUserEntityByEmail(email);
+
+            log.info("Token renovado exitosamente para: {}", email);
+
+            return new AuthResponseDTO(
+                newToken,
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole(),
+                Boolean.TRUE.equals(user.getVerified()),
+                (user.getHostProfile() != null) && Boolean.TRUE.equals(user.getHostProfile().getVerified())
+            );
         } catch (Exception e) {
-            log.error("Error al refrescar token: {}", e.getMessage());
-            throw new InvalidPasswordException("Token inválido");
+            log.error("Error renovando token: {}", e.getMessage());
+            throw new InvalidPasswordException("Token de renovación inválido");
         }
     }
 
@@ -163,6 +158,15 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public UserDTO becomeHost() {
         log.info("Usuario actual solicitando convertirse en HOST");
-        return userService.becomeHost();
+
+        // Obtener el usuario actual autenticado
+        UserDTO currentUser = getCurrentUser();
+
+        // Convertir a HOST usando UserService
+        UserDTO updatedUser = userService.convertToHost(currentUser.id());
+
+        log.info("Usuario {} convertido exitosamente a HOST", currentUser.email());
+
+        return updatedUser;
     }
 }
