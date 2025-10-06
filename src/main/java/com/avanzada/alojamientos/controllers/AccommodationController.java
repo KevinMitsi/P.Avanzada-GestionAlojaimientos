@@ -6,6 +6,7 @@ import com.avanzada.alojamientos.services.AccommodationService;
 import com.avanzada.alojamientos.services.impl.AccommodationServiceImpl;
 import com.avanzada.alojamientos.exceptions.UploadingImageException;
 import com.avanzada.alojamientos.exceptions.DeletingImageException;
+import com.avanzada.alojamientos.security.CurrentUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,9 +28,11 @@ import java.util.Optional;
 public class AccommodationController {
 
     private final AccommodationService accommodationService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/{hostId}")
-    public ResponseEntity<AccommodationDTO> create(@PathVariable Long hostId, @RequestBody @Valid CreateAccommodationDTO dto) {
+    @PostMapping
+    public ResponseEntity<AccommodationDTO> create(@RequestBody @Valid CreateAccommodationDTO dto) {
+        Long hostId = currentUserService.getCurrentHostId();
         AccommodationDTO result = accommodationService.create(dto, hostId);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
@@ -65,8 +68,9 @@ public class AccommodationController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/host/{hostId}")
-    public ResponseEntity<Page<AccommodationDTO>> findByHost(@PathVariable Long hostId, Pageable pageable) {
+    @GetMapping("/host/me")
+    public ResponseEntity<Page<AccommodationDTO>> findByHost(Pageable pageable) {
+        Long hostId = currentUserService.getCurrentHostId();
         Page<AccommodationDTO> result = accommodationService.findByHost(hostId, pageable);
         return ResponseEntity.ok(result);
     }

@@ -3,6 +3,7 @@ package com.avanzada.alojamientos.controllers;
 
 import com.avanzada.alojamientos.DTO.comment.CommentDTO;
 import com.avanzada.alojamientos.DTO.comment.CreateCommentDTO;
+import com.avanzada.alojamientos.security.CurrentUserService;
 import com.avanzada.alojamientos.services.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,13 @@ import org.springframework.web.bind.annotation.*;
 public class CommentController {
 
     private final CommentService commentService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/{userId}/{reservationId}/{accommodationId}")
-    public ResponseEntity<CommentDTO> create(@PathVariable Long userId,
-                             @PathVariable Long reservationId,
+    @PostMapping("/{reservationId}/{accommodationId}")
+    public ResponseEntity<CommentDTO> create(@PathVariable Long reservationId,
                              @PathVariable Long accommodationId,
                              @RequestBody @Valid CreateCommentDTO dto) {
+        Long userId = currentUserService.getCurrentUserId();
         return ResponseEntity.ok(commentService.create(userId, reservationId, dto, accommodationId));
     }
 
@@ -37,15 +39,16 @@ public class CommentController {
         return commentService.findByAccommodation(accommodationId, pageable);
     }
 
-    @GetMapping("/user/{userId}")
-    public Page<CommentDTO> findByUser(@PathVariable Long userId, Pageable pageable) {
+    @GetMapping("/user/me")
+    public Page<CommentDTO> findByUser(Pageable pageable) {
+        Long userId = currentUserService.getCurrentUserId();
         return commentService.findByUser(userId, pageable);
     }
 
     @PutMapping("/{commentId}/reply")
     public ResponseEntity<String> reply(@PathVariable Long commentId,
-                      @RequestParam Long hostId,
                       @RequestParam String replyText) {
+        Long hostId = currentUserService.getCurrentHostId();
         commentService.reply(commentId, hostId, replyText);
         return ResponseEntity.ok("Reply added successfully");
     }

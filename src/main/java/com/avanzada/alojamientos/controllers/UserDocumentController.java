@@ -1,5 +1,6 @@
 package com.avanzada.alojamientos.controllers;
 
+import com.avanzada.alojamientos.security.CurrentUserService;
 import com.avanzada.alojamientos.services.UserDocumentService;
 import lombok.RequiredArgsConstructor;
 
@@ -13,9 +14,11 @@ import java.util.List;
 public class UserDocumentController {
 
     private final UserDocumentService userDocumentService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/{userId}")
-    public void upload(@PathVariable Long userId, @RequestBody List<String> fileUrls) {
+    @PostMapping
+    public void upload(@RequestBody List<String> fileUrls) {
+        Long userId = currentUserService.getCurrentUserId();
         userDocumentService.upload(userId, fileUrls);
     }
 
@@ -24,8 +27,9 @@ public class UserDocumentController {
         userDocumentService.delete(documentId);
     }
 
-    @GetMapping("/{userId}")
-    public List<String> listByUser(@PathVariable Long userId) {
+    @GetMapping("/me")
+    public List<String> listByUser() {
+        Long userId = currentUserService.getCurrentUserId();
         return userDocumentService.listByUser(userId);
     }
 }

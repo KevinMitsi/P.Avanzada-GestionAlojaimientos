@@ -5,6 +5,7 @@ import com.avanzada.alojamientos.DTO.reservation.CreateReservationDTO;
 import com.avanzada.alojamientos.DTO.reservation.ReservationDTO;
 import com.avanzada.alojamientos.DTO.reservation.ReservationSearchCriteria;
 import com.avanzada.alojamientos.DTO.model.ReservationStatus;
+import com.avanzada.alojamientos.security.CurrentUserService;
 import com.avanzada.alojamientos.services.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,11 @@ import java.util.Optional;
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final CurrentUserService currentUserService;
 
-    @PostMapping("/{userId}")
-    public ReservationDTO create(@PathVariable Long userId,
-                                 @RequestBody @Valid CreateReservationDTO dto) {
+    @PostMapping
+    public ReservationDTO create(@RequestBody @Valid CreateReservationDTO dto) {
+        Long userId = currentUserService.getCurrentUserId();
         return reservationService.create(userId, dto);
     }
 
@@ -35,8 +37,9 @@ public class ReservationController {
         return reservationService.findById(reservationId);
     }
 
-    @GetMapping("/user/{userId}")
-    public Page<ReservationDTO> findByUser(@PathVariable Long userId,  @ParameterObject Pageable pageable) {
+    @GetMapping("/user/me")
+    public Page<ReservationDTO> findByUser(@ParameterObject Pageable pageable) {
+        Long userId = currentUserService.getCurrentUserId();
         return reservationService.findByUser(userId, pageable);
     }
 
@@ -68,15 +71,15 @@ public class ReservationController {
 
     @PutMapping("/{reservationId}/cancel")
     public void cancel(@PathVariable Long reservationId,
-                       @RequestParam Long cancelledByUserId,
                        @RequestParam String motivo) {
+        Long cancelledByUserId = currentUserService.getCurrentUserId();
         reservationService.cancel(reservationId, cancelledByUserId, motivo);
     }
 
     @PutMapping("/{reservationId}/status")
     public void updateStatus(@PathVariable Long reservationId,
-                             @RequestParam ReservationStatus status,
-                             @RequestParam Long hostId) {
+                             @RequestParam ReservationStatus status) {
+        Long hostId = currentUserService.getCurrentHostId();
         reservationService.updateStatus(reservationId, status, hostId);
     }
 }
