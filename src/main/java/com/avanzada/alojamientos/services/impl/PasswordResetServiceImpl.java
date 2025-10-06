@@ -2,26 +2,24 @@ package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.auth.PasswordResetDto;
 import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
-import com.avanzada.alojamientos.Security.JWTUtils;
 import com.avanzada.alojamientos.entities.PasswordResetTokenEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
-import com.avanzada.alojamientos.exceptions.InvalidTokenException;
-import com.avanzada.alojamientos.exceptions.TokenExpiredException;
+import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.repositories.PasswordResetTokenRepository;
 import com.avanzada.alojamientos.repositories.UserRepository;
 import com.avanzada.alojamientos.services.PasswordResetService;
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-
+import java.util.Base64;
 
 @Service
 @Slf4j
@@ -31,78 +29,125 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JWTUtils jwtUtils;
 
-    @Transactional
+    private static final int TOKEN_LENGTH = 6;
+    private static final int TOKEN_EXPIRATION_MINUTES = 15;
+
     @Override
+    @Transactional
     public void requestReset(PasswordResetRequestDTO dto) {
-        // Buscar usuario por email
+        log.info("Password reset requested for email: {}", dto.email());
+
+        // 1. Buscar usuario por email
         UserEntity user = userRepository.findByEmail(dto.email())
-                .orElseThrow(() -> new UserNotFoundException("No existe un usuario con ese correo."));
+                .orElseThrow(() -> new UserNotFoundException("There is no user with the email: " + dto.email()));
 
-        // Invalidar tokens anteriores
-        List<PasswordResetTokenEntity> oldTokens = tokenRepository.findByUserAndUsedFalse(user);
-        oldTokens.forEach(t -> t.setUsed(true));
-        tokenRepository.saveAll(oldTokens);
+        // 2. Validar que el usuario esté habilitado
+        if (Boolean.FALSE.equals(user.getEnabled())) {
+            throw new UnauthorizedException("The account is disabled");
+        }
 
-        // Generar nuevo JWT con expiración de 15 minutos
-        String jwtToken = jwtUtils.generateToken(
-                user.getId().toString(),
-                Map.of("email", user.getEmail(), "type", "password-reset")
-        );
+        // 3. Invalidar tokens anteriores del usuario (marcarlos como usados)
+        invalidatePreviousTokens(user);
 
-        // Guardar token sin encriptar
+        // 4. Generar código de recuperación (6 dígitos)
+        String recoveryCode = generateRecoveryCode();
+
+        // 5. Crear hash del código para almacenar en BD
+        String tokenHash = hashToken(recoveryCode);
+
+        // 6. Crear entidad del token
         PasswordResetTokenEntity tokenEntity = new PasswordResetTokenEntity();
         tokenEntity.setUser(user);
-        tokenEntity.setTokenHash(jwtToken);
-        tokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        tokenEntity.setTokenHash(tokenHash);
+        tokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(TOKEN_EXPIRATION_MINUTES));
         tokenEntity.setUsed(false);
+        tokenEntity.setCreatedAt(LocalDateTime.now());
+
         tokenRepository.save(tokenEntity);
 
-        // TODO: Enviar el correo aquí
+        log.info("Password reset token created for user ID: {} - Token expires at: {}",
+                user.getId(), tokenEntity.getExpiresAt());
+
+        // TODO: Enviar email con el código de recuperación
 
 
-        log.info("Token de recuperación generado para {} (expira en 15 minutos)", user.getEmail());
+        // TEMPORAL: Imprimir código en consola para pruebas
+        log.warn("⚠️ CÓDIGO DE RECUPERACIÓN (solo para desarrollo): {}", recoveryCode);
+        log.warn("⚠️ Este código expira en {} minutos", TOKEN_EXPIRATION_MINUTES);
     }
 
-    @Transactional
+
+
+
     @Override
+    @Transactional
     public void resetPassword(PasswordResetDto dto) {
-        String jwtToken = dto.token();
 
-        // Validar el JWT (expiración, integridad, firma)
-        try {
-            jwtUtils.parseJwt(jwtToken);
-        } catch (ExpiredJwtException e) {
-            throw new TokenExpiredException("El token ha expirado. Solicite uno nuevo.");
-        } catch (Exception e) {
-            throw new InvalidTokenException("El token de recuperación es inválido.");
-        }
+        log.info("Attempting password reset with provided token");
 
-        // Buscar token en la base de datos
-        PasswordResetTokenEntity tokenEntity = tokenRepository.findByTokenHashAndUsedFalse(jwtToken)
-                .orElseThrow(() -> new InvalidTokenException("El token no es válido o ya fue utilizado."));
+        // 1. Crear hash del token recibido
+        String tokenHash = hashToken(dto.token());
 
-        // Validar expiración
+        // 2. Buscar token válido en la BD
+        PasswordResetTokenEntity tokenEntity = tokenRepository
+                .findByTokenHashAndUsedFalse(tokenHash)
+                .orElseThrow(() -> new UnauthorizedException("Invalid recovery code"));
+
+        // 3. Validar que el token no haya expirado
         if (tokenEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new TokenExpiredException("El token ha expirado. Solicite uno nuevo.");
+            throw new UnauthorizedException("The recovery code has expired. Request a new one.");
         }
 
-        // Actualizar la contraseña del usuario
+        // 4. Obtener usuario asociado al token
         UserEntity user = tokenEntity.getUser();
-        if (user == null) {
-            throw new UserNotFoundException("El usuario asociado al token no existe.");
-        }
 
+        // 5. Actualizar contraseña del usuario
         user.setPassword(passwordEncoder.encode(dto.newPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // Marcar el token como usado
+        // 6. Marcar el token como usado
         tokenEntity.setUsed(true);
         tokenRepository.save(tokenEntity);
 
-        log.info("Contraseña restablecida correctamente para usuario {}", user.getEmail());
+        log.info("Password successfully reset for user ID: {}", user.getId());
+
+        // TODO: Enviar email de confirmación
+
+
+
+
+
     }
+
+    private void invalidatePreviousTokens(UserEntity user) {
+        tokenRepository.findByUserAndUsedFalse(user)
+                .forEach(token -> {
+                    token.setUsed(true);
+                    tokenRepository.save(token);
+                    log.debug("Invalidated previous token for user ID: {}", user.getId());
+                });
+    }
+
+    private String generateRecoveryCode() {
+        SecureRandom random = new SecureRandom();
+        int code = 100000 + random.nextInt(900000); // Genera número entre 100000 y 999999
+        return String.valueOf(code);
+    }
+
+    /**
+     * Crea un hash SHA-256 del token para almacenarlo de forma segura
+     */
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes());
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Error hashing token", e);
+            throw new RuntimeException("Error processing recovery token");
+        }
+    }
+
 }
-
-
