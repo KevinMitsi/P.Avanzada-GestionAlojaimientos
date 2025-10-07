@@ -35,6 +35,16 @@ public class ControllerAdvice {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    @ExceptionHandler(RecoveryTokenException.class)
+    public ResponseEntity<ResponseErrorDTO> handleRecoveryTokenException(RecoveryTokenException ex) {
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                "Error con el token de recuperación",
+                Map.of(KEY_IN_MAP, ex.getMessage())
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     // Manejo de credenciales inválidas
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<ResponseErrorDTO> handleInvalidPasswordException(InvalidPasswordException ex) {

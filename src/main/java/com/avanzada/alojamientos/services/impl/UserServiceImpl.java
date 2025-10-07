@@ -27,6 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    public static final String USER_NOT_FOUND_EXCEPTION_MESSAGE = "Usuario no encontrado con ID: ";
     private final UserRepository userRepository;
     private final HostProfileRepository hostProfileRepository;
     private final UserMapper userMapper;
@@ -106,7 +107,7 @@ public class UserServiceImpl implements UserService {
         log.info("Editando usuario con ID: {}", userId);
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
 
         // Actualizar campos desde DTO
         userMapper.updateEntityFromDTO(dto, user);
@@ -136,7 +137,7 @@ public class UserServiceImpl implements UserService {
 
         Long id = Long.parseLong(userId);
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
 
         user.setEnabled(enable);
         user.setUpdatedAt(LocalDateTime.now());
@@ -152,7 +153,7 @@ public class UserServiceImpl implements UserService {
 
         Long id = Long.parseLong(userId);
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
 
         // Eliminación lógica
         user.setDeleted(true);
@@ -170,7 +171,7 @@ public class UserServiceImpl implements UserService {
 
         Long id = Long.parseLong(userId);
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
 
         // Verificar contraseña actual
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
@@ -191,7 +192,7 @@ public class UserServiceImpl implements UserService {
         log.info("Convirtiendo usuario {} a HOST", userId);
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
 
         // Si ya tiene perfil de host, solo asegurar rol HOST y devolver
         if (user.getHostProfile() != null) {
@@ -225,10 +226,4 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserDTO(updatedUser);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserEntity findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con email: " + email));
-    }
 }

@@ -9,8 +9,8 @@ public record PasswordResetDto(
     @NotBlank
     @Length(min = 8, max = 20)
     @Pattern(
-            regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
-            message = "La contraseña debe contener al menos una mayúscula, un número y un símbolo (@$!%*?&)"
+            regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-])[A-Za-z\\d@$!%*?&._-]+$",
+            message = "La contraseña debe contener al menos una mayúscula, un número y un símbolo (@$!%*?&._-)"
     ) String newPassword)
 {
 }

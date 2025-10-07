@@ -31,9 +31,9 @@ public class AccommodationController {
     private final CurrentUserService currentUserService;
 
     @PostMapping
-    public ResponseEntity<AccommodationDTO> create(@RequestBody @Valid CreateAccommodationDTO dto) {
+    public ResponseEntity<CreateAccommodationResponseDTO> create(@RequestBody @Valid CreateAccommodationDTO dto) {
         Long hostId = currentUserService.getCurrentHostId();
-        AccommodationDTO result = accommodationService.create(dto, hostId);
+        CreateAccommodationResponseDTO result = accommodationService.create(dto, hostId);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 

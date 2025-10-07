@@ -504,10 +504,10 @@ public class ReservationServiceImpl implements ReservationService {
 
     private void sendStatusUpdateNotification(ReservationEntity reservation, ReservationStatus status,
                                             Long reservationId) throws Exception {
-        String notificationTitle = "";
-        String notificationBody = "";
-        String emailSubject = "";
-        String emailBody = "";
+        String notificationTitle;
+        String notificationBody;
+        String emailSubject;
+        String emailBody;
 
         switch (status) {
             case CONFIRMED -> {

@@ -3,6 +3,7 @@ package com.avanzada.alojamientos.mappers;
 
 import com.avanzada.alojamientos.DTO.accommodation.CreateAccommodationDTO;
 import com.avanzada.alojamientos.DTO.accommodation.AccommodationDTO;
+import com.avanzada.alojamientos.DTO.accommodation.CreateAccommodationResponseDTO;
 import com.avanzada.alojamientos.DTO.accommodation.UpdateAccommodationDTO;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.CityEntity;
@@ -18,6 +19,11 @@ public interface AccommodationMapper {
     @Mapping(source = "images", target = "images")
     @Mapping(source = "coordinates", target = "coordinates")
     AccommodationDTO toAccommodationDTO(AccommodationEntity accommodation);
+
+    @Mapping(source = "host.id", target = "hostId")
+    @Mapping(source = "city", target = "city")
+    @Mapping(source = "coordinates", target = "coordinates")
+    CreateAccommodationResponseDTO toCreateAccommodationResponseDTO(AccommodationEntity accommodation);
 
 
 

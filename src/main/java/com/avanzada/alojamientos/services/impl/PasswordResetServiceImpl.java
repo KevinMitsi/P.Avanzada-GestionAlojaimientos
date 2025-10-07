@@ -2,15 +2,15 @@ package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.auth.PasswordResetDto;
 import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
+import com.avanzada.alojamientos.DTO.notification.EmailDTO;
 import com.avanzada.alojamientos.entities.PasswordResetTokenEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
-import com.avanzada.alojamientos.exceptions.InvalidTokenException;
+import com.avanzada.alojamientos.exceptions.RecoveryTokenException;
 import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.repositories.PasswordResetTokenRepository;
 import com.avanzada.alojamientos.repositories.UserRepository;
-import com.avanzada.alojamientos.security.CustomUserDetailsService;
-import com.avanzada.alojamientos.security.JwtService;
+import com.avanzada.alojamientos.services.EmailNotificationService;
 import com.avanzada.alojamientos.services.PasswordResetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +30,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
+    private final EmailNotificationService notificationService;
 
-    private static final long TOKEN_EXPIRATION_MINUTES = 15;
+    private static final int TOKEN_EXPIRATION_MINUTES = 15;
 
     @Override
     @Transactional
@@ -67,21 +66,19 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenEntity.setUsed(false);
         tokenRepository.save(tokenEntity);
 
-        log.info(" Token JWT generado para restablecimiento (expira en {} minutos)", TOKEN_EXPIRATION_MINUTES);
+        log.info("Password reset token created for user ID: {} - Token expires at: {}",
+                user.getId(), tokenEntity.getExpiresAt());
 
-        // 6. Aquí va la lógica para enviar el correo con el token JWT
-        // TODO: Implementar envío de correo con el token de recuperación
+        // 7. Enviar email con el código de recuperación
+        sendPasswordResetEmail(user, recoveryCode);
+
+        log.info("Password reset email sent successfully to: {}", dto.email());
     }
-
-
-
 
     @Override
     @Transactional
     public void resetPassword(PasswordResetDto dto) {
-        log.info("Intentando restablecer la contraseña...");
-
-        String userEmail;
+        log.info("Attempting password reset with provided token");
 
         // 1. Extraer el email del token JWT
         try {
@@ -112,10 +109,107 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenEntity.setUsed(true);
         tokenRepository.save(tokenEntity);
 
-        log.info(" Contraseña restablecida correctamente para {}", user.getEmail());
+        log.info("Password successfully reset for user ID: {}", user.getId());
 
-        // 7. Aquí va la lógica para enviar el correo de confirmación
-        // TODO: Implementar envío de correo de confirmación de restablecimiento
+        // 7. Enviar email de confirmación
+        sendPasswordChangeConfirmationEmail(user);
+
+        log.info("Password change confirmation email sent successfully to: {}", user.getEmail());
     }
 
+    private void invalidatePreviousTokens(UserEntity user) {
+        tokenRepository.findByUserAndUsedFalse(user)
+                .forEach(token -> {
+                    token.setUsed(true);
+                    tokenRepository.save(token);
+                    log.debug("Invalidated previous token for user ID: {}", user.getId());
+                });
+    }
+
+    private String generateRecoveryCode() {
+        SecureRandom random = new SecureRandom();
+        int code = 100000 + random.nextInt(900000); // Genera número entre 100000 y 999999
+        return String.valueOf(code);
+    }
+
+    /**
+     * Crea un hash SHA-256 del token para almacenarlo de forma segura
+     */
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes());
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Error hashing token", e);
+            throw new RecoveryTokenException("Error processing recovery token");
+        }
+    }
+
+    /**
+     * Envía el email con el código de recuperación de contraseña
+     */
+    private void sendPasswordResetEmail(UserEntity user, String recoveryCode) {
+        try {
+            String subject = "Recuperación de Contraseña - StayGo";
+            String body = String.format(
+                """
+                Hola %s,
+                
+                Has solicitado restablecer tu contraseña en StayGo.
+                
+                Tu código de recuperación es: %s
+                
+                Este código expira en %d minutos.
+                
+                Si no solicitaste este cambio, puedes ignorar este correo.
+                
+                Saludos,
+                Equipo de Alojamientos
+                """,
+                user.getName() != null ? user.getName() : "Usuario",
+                recoveryCode,
+                TOKEN_EXPIRATION_MINUTES
+            );
+
+            EmailDTO emailDTO = new EmailDTO(subject, body, user.getEmail());
+            notificationService.sendMail(emailDTO);
+
+            log.info("Password reset email sent to: {}", user.getEmail());
+        } catch (Exception e) {
+            log.error("Error sending password reset email to: {}", user.getEmail(), e);
+            }
+    }
+
+    /**
+     * Envía el email de confirmación de cambio de contraseña
+     */
+    private void sendPasswordChangeConfirmationEmail(UserEntity user) {
+        try {
+            String subject = "Contraseña Cambiada Exitosamente - StayGo";
+            String body = String.format(
+                """
+                Hola %s,
+                
+                Tu contraseña ha sido cambiada exitosamente en StayGo.
+                
+                Fecha y hora del cambio: %s
+                
+                Si no realizaste este cambio, contacta inmediatamente con nuestro soporte.
+                
+                Saludos,
+                Equipo de Alojamientos
+                """,
+                user.getName() != null ? user.getName() : "Usuario",
+                LocalDateTime.now()
+            );
+
+            EmailDTO emailDTO = new EmailDTO(subject, body, user.getEmail());
+            notificationService.sendMail(emailDTO);
+
+            log.info("Password change confirmation email sent to: {}", user.getEmail());
+        } catch (Exception e) {
+            log.error("Error sending password change confirmation email to: {}", user.getEmail(), e);
+        }
+    }
 }
