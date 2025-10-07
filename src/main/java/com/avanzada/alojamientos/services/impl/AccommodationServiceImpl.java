@@ -48,7 +48,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     @Override
     @Transactional
-    public AccommodationDTO create(CreateAccommodationDTO dto, Long hostId) {
+    public CreateAccommodationResponseDTO create(CreateAccommodationDTO dto, Long hostId) {
         AccommodationEntity entity = accommodationMapper.toEntity(dto);
 
         if (hostId != null) {
@@ -60,7 +60,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         setDefaultValues(entity);
 
         AccommodationEntity savedEntity = accommodationRepository.save(entity);
-        return accommodationMapper.toAccommodationDTO(savedEntity);
+        return accommodationMapper.toCreateAccommodationResponseDTO(savedEntity);
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.avanzada.alojamientos.DTO.user.CreateUserDTO;
 import com.avanzada.alojamientos.DTO.user.EditUserDTO;
 import com.avanzada.alojamientos.DTO.auth.RegisterUserDTO;
 import com.avanzada.alojamientos.DTO.user.UserDTO;
-import com.avanzada.alojamientos.entities.UserEntity;
+
 
 import java.util.Optional;
 
@@ -19,5 +19,5 @@ public interface UserService {
 
     // Nuevos métodos para la funcionalidad de HOST
     UserDTO convertToHost(Long userId);
-    UserEntity findByEmail(String email);
+
 }

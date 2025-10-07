@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface AccommodationService {
-    AccommodationDTO create(CreateAccommodationDTO dto, Long hostId);
+    CreateAccommodationResponseDTO create(CreateAccommodationDTO dto, Long hostId);
     AccommodationDTO update(Long accommodationId, UpdateAccommodationDTO dto);
     Optional<AccommodationDTO> findById(Long accommodationId);
     Page<AccommodationDTO> search(AccommodationSearch criteria, Pageable pageable);
