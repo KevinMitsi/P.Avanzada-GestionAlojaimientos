@@ -13,7 +13,6 @@ public record CreateUserDTO(
         @Length(max = 10) String phone,
         @NotBlank @Length(max = 50) @Email String email,
         @NotBlank @Length(min = 8, max = 20) String password,
-        @Length(max = 300) String photoUrl,
         @NotNull @Past LocalDate dateBirth,
         @NotNull UserRole role
 ) {

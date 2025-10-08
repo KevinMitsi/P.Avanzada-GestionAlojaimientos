@@ -2,9 +2,9 @@ package com.avanzada.alojamientos.services.impl;
 
 
 import com.avanzada.alojamientos.exceptions.ConnectionCloudinaryException;
-import com.avanzada.alojamientos.exceptions.DeletingImageException;
-import com.avanzada.alojamientos.exceptions.UploadingImageException;
-import com.avanzada.alojamientos.services.ImageService;
+import com.avanzada.alojamientos.exceptions.DeletingStorageException;
+import com.avanzada.alojamientos.exceptions.UploadingStorageException;
+import com.avanzada.alojamientos.services.StorageService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @Service
-public class ImageServiceImpl implements ImageService {
+public class StorageServiceImpl implements StorageService {
 
     public static final String APP_CLOUDINARY_STORAGE = "app_staygo_project";
 
@@ -27,9 +27,9 @@ public class ImageServiceImpl implements ImageService {
     private final String apiSecret;
     private final Cloudinary cloudinary;
 
-    public ImageServiceImpl(@Value("${cloudinary.cloud-name}") String cloudName,
-                           @Value("${cloudinary.api-key}") String apiKey,
-                           @Value("${cloudinary.api-secret}") String apiSecret) {
+    public StorageServiceImpl(@Value("${cloudinary.cloud-name}") String cloudName,
+                              @Value("${cloudinary.api-key}") String apiKey,
+                              @Value("${cloudinary.api-secret}") String apiSecret) {
         this.cloudName = cloudName;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
@@ -42,24 +42,24 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public Map upload(MultipartFile image) throws UploadingImageException {
+    public Map upload(MultipartFile image) throws UploadingStorageException {
         File file;
         try {
         validateCloudinaryConfig();
             file = convert(image);
             return cloudinary.uploader().upload(file, ObjectUtils.asMap("folder", APP_CLOUDINARY_STORAGE));
         } catch (IOException ex) {
-            throw new UploadingImageException(ex.getMessage());
+            throw new UploadingStorageException(ex.getMessage());
         }
     }
 
     @Override
-    public Map delete(String imageId) throws DeletingImageException {
+    public Map delete(String imageId) throws DeletingStorageException {
         try {
         validateCloudinaryConfig();
             return cloudinary.uploader().destroy(imageId, ObjectUtils.emptyMap());
         } catch (IOException e) {
-            throw new DeletingImageException(e.getMessage());
+            throw new DeletingStorageException(e.getMessage());
         }
     }
 

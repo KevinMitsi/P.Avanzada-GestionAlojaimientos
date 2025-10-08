@@ -15,6 +15,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
     // Entity -> DTO
+    @Mapping(target = "profileImageUrl", expression = "java(user.getProfileImage() != null ? user.getProfileImage().getUrl() : null)")
     UserDTO toUserDTO(UserEntity user);
 
     // Create DTO -> Entity
@@ -30,7 +31,7 @@ public interface UserMapper {
     @Mapping(target = "favorites", ignore = true)
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "hostProfile", ignore = true)
-    @Mapping(target = "avatarUrl", ignore = true)
+    @Mapping(target = "profileImage", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
     @Mapping(target = "dateOfBirth", ignore = true)
@@ -50,7 +51,7 @@ public interface UserMapper {
     @Mapping(target = "favorites", ignore = true)
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "hostProfile", ignore = true)
-    @Mapping(target = "avatarUrl", ignore = true)
+    @Mapping(target = "profileImage", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
     @Mapping(target = "roles", ignore = true)
@@ -71,7 +72,7 @@ public interface UserMapper {
     @Mapping(target = "favorites", ignore = true)
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "hostProfile", ignore = true)
-    @Mapping(target = "avatarUrl", source = "photoUrl")
+    @Mapping(target = "profileImage", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
     @Mapping(target = "dateOfBirth", source = "dateBirth")

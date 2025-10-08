@@ -1,10 +1,15 @@
 package com.avanzada.alojamientos.services;
 
+import com.avanzada.alojamientos.exceptions.DeletingStorageException;
+import com.avanzada.alojamientos.exceptions.UploadingStorageException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface UserDocumentService {
-    void upload(Long userId, List<String> urlFiles);
-    void delete(Long documentId);
-    List<String> listByUser(Long userId);
+
+    List<String> uploadDocuments(Long userId, List<MultipartFile> documentFiles) throws UploadingStorageException;
+    void deleteDocument(Long userId, Long documentIndex) throws DeletingStorageException;
+
+
 }

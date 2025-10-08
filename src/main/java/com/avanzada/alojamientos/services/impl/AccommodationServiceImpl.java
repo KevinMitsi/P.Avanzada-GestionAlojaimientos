@@ -6,13 +6,13 @@ import com.avanzada.alojamientos.exceptions.SearchingAccommodationException;
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
-import com.avanzada.alojamientos.services.ImageService;
+import com.avanzada.alojamientos.services.StorageService;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.ImageEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
-import com.avanzada.alojamientos.exceptions.UploadingImageException;
-import com.avanzada.alojamientos.exceptions.DeletingImageException;
+import com.avanzada.alojamientos.exceptions.UploadingStorageException;
+import com.avanzada.alojamientos.exceptions.DeletingStorageException;
 import com.avanzada.alojamientos.repositories.ImageRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
-    private final ImageService imageService;
+    private final StorageService storageService;
     private final ImageRepository imageRepository;
 
 
@@ -164,7 +164,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
 
     @Transactional
-    public List<String> uploadAndAddImages(Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingImageException {
+    public List<String> uploadAndAddImages(Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingStorageException {
         if (imageFiles == null || imageFiles.isEmpty()) {
             return Collections.emptyList();
         }
@@ -185,7 +185,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         for (int i = 0; i < imageFiles.size(); i++) {
             MultipartFile file = imageFiles.get(i);
             try {
-                Map<Object, Object> uploadResult = imageService.upload(file);
+                Map<Object, Object> uploadResult = storageService.upload(file);
                 String imageUrl = (String) uploadResult.get("secure_url");
                 String publicId = (String) uploadResult.get("public_id");
                 String thumbnailUrl = (String) uploadResult.get("eager");
@@ -200,7 +200,7 @@ public class AccommodationServiceImpl implements AccommodationService {
                 newImages.add(image);
                 uploadedUrls.add(imageUrl);
 
-            } catch (UploadingImageException e) {
+            } catch (UploadingStorageException e) {
                 log.error("Error uploading image for accommodation {}: {}", accommodationId, e.getMessage());
                 throw e;
             }
@@ -215,32 +215,32 @@ public class AccommodationServiceImpl implements AccommodationService {
 
 
     @Transactional
-    public void deleteImageFromCloudinary(Long accommodationId, Long imageId) throws DeletingImageException {
+    public void deleteImageFromCloudinary(Long accommodationId, Long imageId) throws DeletingStorageException {
         if (imageId == null) {
-            throw new DeletingImageException("imageId is required");
+            throw new DeletingStorageException("imageId is required");
         }
 
         // Verificar que el accommodation existe
         if (Boolean.FALSE.equals(accommodationRepository.existsByIdAndSoftDeletedFalse(accommodationId))) {
-            throw new DeletingImageException("Accommodation not found with ID: " + accommodationId);
+            throw new DeletingStorageException("Accommodation not found with ID: " + accommodationId);
         }
 
         ImageEntity image = imageRepository.findById(imageId)
-                .orElseThrow(() -> new DeletingImageException("Image not found with ID: " + imageId));
+                .orElseThrow(() -> new DeletingStorageException("Image not found with ID: " + imageId));
 
         if (!Objects.equals(image.getAccommodation().getId(), accommodationId)) {
-            throw new DeletingImageException("Image does not belong to the specified accommodation");
+            throw new DeletingStorageException("Image does not belong to the specified accommodation");
         }
 
         try {
             if (image.getCloudinaryPublicId() != null) {
-                imageService.delete(image.getCloudinaryPublicId());
+                storageService.delete(image.getCloudinaryPublicId());
             }
             imageRepository.delete(image);
 
             log.info("Successfully deleted image with ID {} from accommodation {}", imageId, accommodationId);
 
-        } catch (DeletingImageException e) {
+        } catch (DeletingStorageException e) {
             log.error("Error deleting image from Cloudinary: {}", e.getMessage());
             throw e;
         }

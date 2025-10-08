@@ -4,7 +4,9 @@ import com.avanzada.alojamientos.DTO.user.CreateUserDTO;
 import com.avanzada.alojamientos.DTO.user.EditUserDTO;
 import com.avanzada.alojamientos.DTO.auth.RegisterUserDTO;
 import com.avanzada.alojamientos.DTO.user.UserDTO;
-
+import com.avanzada.alojamientos.exceptions.DeletingStorageException;
+import com.avanzada.alojamientos.exceptions.UploadingStorageException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -20,4 +22,7 @@ public interface UserService {
     // Nuevos métodos para la funcionalidad de HOST
     UserDTO convertToHost(Long userId);
 
+    // Métodos para manejo de foto de perfil
+    String uploadProfileImage(Long userId, MultipartFile imageFile) throws UploadingStorageException;
+    void deleteProfileImage(Long userId) throws DeletingStorageException;
 }
