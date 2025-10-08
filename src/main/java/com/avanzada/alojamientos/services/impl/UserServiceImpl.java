@@ -7,19 +7,26 @@ import com.avanzada.alojamientos.DTO.user.UserDTO;
 import com.avanzada.alojamientos.DTO.model.UserRole;
 import com.avanzada.alojamientos.entities.HostProfileEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
+import com.avanzada.alojamientos.entities.ImageEntity;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.exceptions.InvalidPasswordException;
+import com.avanzada.alojamientos.exceptions.UploadingStorageException;
+import com.avanzada.alojamientos.exceptions.DeletingStorageException;
 import com.avanzada.alojamientos.repositories.UserRepository;
 import com.avanzada.alojamientos.repositories.HostProfileRepository;
+import com.avanzada.alojamientos.repositories.ImageRepository;
 import com.avanzada.alojamientos.mappers.UserMapper;
 import com.avanzada.alojamientos.services.UserService;
+import com.avanzada.alojamientos.services.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -30,6 +37,8 @@ public class UserServiceImpl implements UserService {
     public static final String USER_NOT_FOUND_EXCEPTION_MESSAGE = "Usuario no encontrado con ID: ";
     private final UserRepository userRepository;
     private final HostProfileRepository hostProfileRepository;
+    private final ImageRepository imageRepository;
+    private final StorageService storageService;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -224,6 +233,108 @@ public class UserServiceImpl implements UserService {
         log.info("Usuario {} convertido exitosamente a HOST y perfil creado con ID: {}", userId, profile.getId());
 
         return userMapper.toUserDTO(updatedUser);
+    }
+
+    @Override
+    @Transactional
+    public String uploadProfileImage(Long userId, MultipartFile imageFile) throws UploadingStorageException {
+        log.info("Subiendo foto de perfil para usuario: {}", userId);
+
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new UploadingStorageException("El archivo de imagen es requerido");
+        }
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
+
+        if (Boolean.TRUE.equals(user.getDeleted())) {
+            throw new IllegalStateException("No se puede subir imagen a un usuario eliminado");
+        }
+
+        try {
+            // Si ya tiene una foto de perfil, eliminarla de Cloudinary
+            if (user.getProfileImage() != null) {
+                deleteExistingProfileImage(user);
+            }
+
+            // Subir nueva imagen a Cloudinary
+            Map<Object, Object> uploadResult = storageService.upload(imageFile);
+            String imageUrl = (String) uploadResult.get("secure_url");
+            String publicId = (String) uploadResult.get("public_id");
+            String thumbnailUrl = (String) uploadResult.get("eager");
+
+            // Crear nueva entidad de imagen
+            ImageEntity profileImage = createProfileImageEntity(imageUrl, publicId, thumbnailUrl, user);
+
+            // Guardar la imagen y actualizar el usuario
+            imageRepository.save(profileImage);
+            user.setProfileImage(profileImage);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+
+            log.info("Foto de perfil subida exitosamente para usuario {}: {}", userId, imageUrl);
+            return imageUrl;
+
+        } catch (UploadingStorageException | DeletingStorageException e) {
+            log.error("Error subiendo foto de perfil para usuario {}: {}", userId, e.getMessage());
+            throw new UploadingStorageException("Error subiendo foto de perfil: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteProfileImage(Long userId) throws DeletingStorageException {
+        log.info("Eliminando foto de perfil para usuario: {}", userId);
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
+
+        if (user.getProfileImage() == null) {
+            throw new DeletingStorageException("El usuario no tiene foto de perfil");
+        }
+
+        try {
+            ImageEntity profileImage = user.getProfileImage();
+
+            // Eliminar de Cloudinary si tiene publicId
+            if (profileImage.getCloudinaryPublicId() != null) {
+                storageService.delete(profileImage.getCloudinaryPublicId());
+            }
+
+            // Eliminar de la base de datos
+            user.setProfileImage(null);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+            imageRepository.delete(profileImage);
+
+            log.info("Foto de perfil eliminada exitosamente para usuario: {}", userId);
+
+        } catch (DeletingStorageException e) {
+            log.error("Error eliminando foto de perfil para usuario {}: {}", userId, e.getMessage());
+            throw e;
+        }
+    }
+
+    // Métodos privados auxiliares
+    private void deleteExistingProfileImage(UserEntity user) throws DeletingStorageException {
+        ImageEntity existingImage = user.getProfileImage();
+        if (existingImage != null && existingImage.getCloudinaryPublicId() != null) {
+            storageService.delete(existingImage.getCloudinaryPublicId());
+        }
+        if (existingImage != null) {
+            imageRepository.delete(existingImage);
+        }
+    }
+
+    private ImageEntity createProfileImageEntity(String url, String publicId, String thumbnailUrl, UserEntity user) {
+        ImageEntity image = new ImageEntity();
+        image.setUrl(url);
+        image.setCloudinaryPublicId(publicId);
+        image.setCloudinaryThumbnailUrl(thumbnailUrl);
+        image.setIsPrimary(true); // La foto de perfil siempre es primaria
+        image.setCreatedAt(LocalDateTime.now());
+        image.setUser(user); // Establecer la relación bidireccional
+        return image;
     }
 
 }

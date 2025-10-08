@@ -39,8 +39,13 @@ dependencies {
 	implementation 'org.simplejavamail:simple-java-mail:8.12.6'
 	implementation 'org.simplejavamail:batch-module:8.12.6'
 	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.mockito:mockito-core:5.8.0'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.8.0'
+	testImplementation 'org.mockito:mockito-inline:5.2.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

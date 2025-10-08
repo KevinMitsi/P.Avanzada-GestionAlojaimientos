@@ -14,7 +14,7 @@ public record UserDTO(
         String phone,
         LocalDate dateOfBirth,
         Set<UserRole> roles,
-        String avatarUrl,
+        String profileImageUrl,
         String description,
         List<String> documentsUrl,
         Boolean verified,

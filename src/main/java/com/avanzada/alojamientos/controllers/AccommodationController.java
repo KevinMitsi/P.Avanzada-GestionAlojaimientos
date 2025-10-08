@@ -4,8 +4,8 @@ package com.avanzada.alojamientos.controllers;
 import com.avanzada.alojamientos.DTO.accommodation.*;
 import com.avanzada.alojamientos.services.AccommodationService;
 import com.avanzada.alojamientos.services.impl.AccommodationServiceImpl;
-import com.avanzada.alojamientos.exceptions.UploadingImageException;
-import com.avanzada.alojamientos.exceptions.DeletingImageException;
+import com.avanzada.alojamientos.exceptions.UploadingStorageException;
+import com.avanzada.alojamientos.exceptions.DeletingStorageException;
 import com.avanzada.alojamientos.security.CurrentUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -79,7 +79,7 @@ public class AccommodationController {
     @PostMapping("/{accommodationId}/images/upload")
     public ResponseEntity<List<String>> uploadImages(@PathVariable Long accommodationId,
                                      @RequestParam("images") List<MultipartFile> imageFiles,
-                                     @RequestParam(defaultValue = "false") boolean primary) throws UploadingImageException {
+                                     @RequestParam(defaultValue = "false") boolean primary) throws UploadingStorageException {
         List<String> uploadedUrls = ((AccommodationServiceImpl) accommodationService)
                     .uploadAndAddImages(accommodationId, imageFiles, primary);
         return ResponseEntity.ok(uploadedUrls);
@@ -88,7 +88,7 @@ public class AccommodationController {
 
     @DeleteMapping("/{accommodationId}/images/{imageId}")
     public ResponseEntity<Void> deleteImageFromCloudinary(@PathVariable Long accommodationId,
-                                           @PathVariable Long imageId) throws DeletingImageException {
+                                           @PathVariable Long imageId) throws DeletingStorageException {
 
         ((AccommodationServiceImpl) accommodationService).deleteImageFromCloudinary(accommodationId, imageId);
         return ResponseEntity.noContent().build();

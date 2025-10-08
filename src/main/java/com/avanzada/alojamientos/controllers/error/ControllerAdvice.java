@@ -180,8 +180,8 @@ public class ControllerAdvice {
     }
 
     // Excepciones de imágenes
-    @ExceptionHandler(UploadingImageException.class)
-    public ResponseEntity<ResponseErrorDTO> handleUploadingImageException(UploadingImageException ex) {
+    @ExceptionHandler(UploadingStorageException.class)
+    public ResponseEntity<ResponseErrorDTO> handleUploadingImageException(UploadingStorageException ex) {
         ResponseErrorDTO error = new ResponseErrorDTO(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Error al subir la imagen",
@@ -190,8 +190,8 @@ public class ControllerAdvice {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
-    @ExceptionHandler(DeletingImageException.class)
-    public ResponseEntity<ResponseErrorDTO> handleDeletingImageException(DeletingImageException ex) {
+    @ExceptionHandler(DeletingStorageException.class)
+    public ResponseEntity<ResponseErrorDTO> handleDeletingImageException(DeletingStorageException ex) {
         ResponseErrorDTO error = new ResponseErrorDTO(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Error al eliminar la imagen",

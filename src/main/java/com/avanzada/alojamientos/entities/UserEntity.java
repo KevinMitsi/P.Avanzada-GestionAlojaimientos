@@ -50,9 +50,6 @@ public class UserEntity {
     @Column(name = "role")
     private Set<UserRole> roles = new HashSet<>();
 
-    @Column(length = 500)
-    private String avatarUrl;
-
     // Máximo 1000 caracteres
     @Column(nullable = false)
     private String description;
@@ -95,6 +92,10 @@ public class UserEntity {
     @OneToOne(mappedBy = "host", cascade = CascadeType.ALL)
     private HostProfileEntity hostProfile;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "profile_image_id")
+    private ImageEntity profileImage;
+
     // Métodos de conveniencia para manejar roles
     public void addRole(UserRole role) {
         if (this.roles == null) {
@@ -103,11 +104,6 @@ public class UserEntity {
         this.roles.add(role);
     }
 
-    public void removeRole(UserRole role) {
-        if (this.roles != null) {
-            this.roles.remove(role);
-        }
-    }
 
     public boolean hasRole(UserRole role) {
         return this.roles != null && this.roles.contains(role);
@@ -121,14 +117,9 @@ public class UserEntity {
         return hasRole(UserRole.USER);
     }
 
-    public boolean isAdmin() {
-        return hasRole(UserRole.ADMIN);
-    }
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        // Asegurar que todo usuario tenga al menos el rol USER
         if (roles == null || roles.isEmpty()) {
             roles = new HashSet<>();
             roles.add(UserRole.USER);

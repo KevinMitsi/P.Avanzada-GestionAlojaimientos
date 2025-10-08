@@ -38,8 +38,11 @@ public class ImageEntity {
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "accommodation_id", columnDefinition = "BIGINT UNSIGNED")
     private AccommodationEntity accommodation;
+
+    @OneToOne(mappedBy = "profileImage")
+    private UserEntity user;
 
     @PrePersist
     protected void onCreate() {

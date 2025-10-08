@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/accommodations/*/edit").hasRole("HOST")
                         .requestMatchers("/api/accommodations/*/delete").hasRole("HOST")
 
+                        //Admin users
+                        .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
                         // Cualquier otra petición requiere autenticación
                         .anyRequest().authenticated()
                 )
