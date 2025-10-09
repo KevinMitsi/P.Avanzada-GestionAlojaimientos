@@ -111,25 +111,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
-    public UserDTO edit(Long userId, EditUserDTO dto) {
-        log.info("Editando usuario con ID: {}", userId);
-
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
-
-        // Actualizar campos desde DTO
-        userMapper.updateEntityFromDTO(dto, user);
-        user.setUpdatedAt(LocalDateTime.now());
-
-        // Guardar cambios
-        UserEntity updatedUser = userRepository.save(user);
-        log.info("Usuario actualizado exitosamente con ID: {}", updatedUser.getId());
-
-        return userMapper.toUserDTO(updatedUser);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Optional<UserDTO> findById(Long id) {
         log.debug("Buscando usuario con ID: {}", id);
@@ -155,32 +136,14 @@ public class UserServiceImpl implements UserService {
         log.info("Estado del usuario {} cambiado a: {}", userId, enable);
     }
 
-    @Override
-    @Transactional
-    public void delete(String userId) {
-        log.info("Eliminando usuario con ID: {}", userId);
-
-        Long id = Long.parseLong(userId);
-        UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
-
-        // Eliminación lógica
-        user.setDeleted(true);
-        user.setEnabled(false);
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
-
-        log.info("Usuario eliminado exitosamente con ID: {}", userId);
-    }
 
     @Override
     @Transactional
-    public void changePassword(String userId, String oldPassword, String newPassword) {
-        log.info("Cambiando contraseña para usuario: {}", userId);
+    public void changePassword(Long id, String oldPassword, String newPassword) {
+        log.info("Cambiando contraseña para usuario: {}", id);
 
-        Long id = Long.parseLong(userId);
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + id));
 
         // Verificar contraseña actual
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
@@ -192,7 +155,43 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        log.info("Contraseña actualizada exitosamente para usuario: {}", userId);
+        log.info("Contraseña actualizada exitosamente para usuario: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public UserDTO editProfile(Long userId, EditUserDTO dto) {
+        log.info("Editando perfil del usuario con ID: {}", userId);
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
+
+        // Actualizar campos desde DTO
+        userMapper.updateEntityFromDTO(dto, user);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        // Guardar cambios
+        UserEntity updatedUser = userRepository.save(user);
+        log.info("Perfil actualizado exitosamente para usuario con ID: {}", updatedUser.getId());
+
+        return userMapper.toUserDTO(updatedUser);
+    }
+
+    @Override
+    @Transactional
+    public void deleteProfile(Long userId) {
+        log.info("Eliminando perfil del usuario con ID: {}", userId);
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_EXCEPTION_MESSAGE + userId));
+
+        // Eliminación lógica
+        user.setDeleted(true);
+        user.setEnabled(false);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.info("Perfil eliminado exitosamente para usuario con ID: {}", userId);
     }
 
     @Override

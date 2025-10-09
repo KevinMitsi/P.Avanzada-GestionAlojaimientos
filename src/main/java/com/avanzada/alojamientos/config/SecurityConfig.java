@@ -5,6 +5,7 @@ import com.avanzada.alojamientos.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,10 +22,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    public static final String ADMIN_ROLE = "ADMIN";
+    public static final String HOST_ROLE = "HOST";
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -50,6 +53,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/accommodations/**").permitAll()
                         // Endpoints públicos (sin autenticación)
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
@@ -57,16 +61,16 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // Endpoints específicos por rol
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/host/**").hasAnyRole("HOST", "ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole(ADMIN_ROLE)
+                        .requestMatchers("/api/host/**").hasAnyRole(HOST_ROLE, ADMIN_ROLE)
 
                         // Operaciones específicas de usuarios HOST
-                        .requestMatchers("/api/accommodations/create").hasRole("HOST")
-                        .requestMatchers("/api/accommodations/*/edit").hasRole("HOST")
-                        .requestMatchers("/api/accommodations/*/delete").hasRole("HOST")
+                        .requestMatchers("/api/accommodations/create").hasRole(HOST_ROLE)
+                        .requestMatchers("/api/accommodations/*/edit").hasRole(HOST_ROLE)
+                        .requestMatchers("/api/accommodations/*/delete").hasRole(HOST_ROLE)
 
                         //Admin users
-                        .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/admin/**").hasRole(ADMIN_ROLE)
                         // Cualquier otra petición requiere autenticación
                         .anyRequest().authenticated()
                 )

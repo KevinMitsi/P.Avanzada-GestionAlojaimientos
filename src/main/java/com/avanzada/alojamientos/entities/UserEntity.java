@@ -36,7 +36,7 @@ public class UserEntity {
     private String password;
 
     // Teléfono con regex SQL
-    @Column(name = "phone")
+    @Column(name = "phone", nullable = false)
     private String phone;
 
     // Fecha de nacimiento debe ser pasada → CHECK en DB
@@ -51,7 +51,7 @@ public class UserEntity {
     private Set<UserRole> roles = new HashSet<>();
 
     // Máximo 1000 caracteres
-    @Column(nullable = false)
+    @Column
     private String description;
 
     @ElementCollection(fetch = FetchType.EAGER)
