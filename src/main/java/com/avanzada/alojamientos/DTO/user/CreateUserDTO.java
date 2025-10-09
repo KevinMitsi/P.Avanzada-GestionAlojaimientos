@@ -1,6 +1,5 @@
 package com.avanzada.alojamientos.DTO.user;
 
-import com.avanzada.alojamientos.DTO.model.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +12,6 @@ public record CreateUserDTO(
         @Length(max = 10) String phone,
         @NotBlank @Length(max = 50) @Email String email,
         @NotBlank @Length(min = 8, max = 20) String password,
-        @NotNull @Past LocalDate dateBirth,
-        @NotNull UserRole role
+        @NotNull @Past LocalDate dateBirth
 ) {
 }

@@ -12,7 +12,7 @@ public record RegisterUserDTO(
         @NotBlank @Length(max = 50) @Email String email,
         @NotBlank @Length(min = 8, max = 20) String password,
         @NotBlank @Length(max = 100) String name,
-        @Length(max = 10) String phone,
+        @NotBlank @Length(max = 10) String phone,
         @NotNull @Past LocalDate dateOfBirth
 
 ) {
