@@ -31,7 +31,7 @@ public interface UserMapper {
     @Mapping(target = "profileImage", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
-    @Mapping(target = "dateOfBirth", ignore = true)
+    @Mapping(target = "dateOfBirth", source = "dateBirth")
     @Mapping(target = "roles", ignore = true)
     UserEntity toEntity(CreateUserDTO createUserDTO);
 

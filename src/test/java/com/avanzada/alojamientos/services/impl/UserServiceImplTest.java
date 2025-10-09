@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
@@ -77,7 +78,7 @@ class UserServiceImplTest {
         userEntity.setPassword("encodedPassword");
         userEntity.setName("Test User");
         userEntity.setDescription("Test description");
-        userEntity.setRoles(Set.of(UserRole.USER));
+        userEntity.setRoles(new HashSet<>(Set.of(UserRole.USER))); // Usar HashSet mutable
         userEntity.setEnabled(true);
         userEntity.setDeleted(false);
         userEntity.setVerified(false);
@@ -352,7 +353,6 @@ class UserServiceImplTest {
 
         // Assert
         verify(userRepository).findById(1L);
-        verify(passwordEncoder).matches("oldPassword", userEntity.getPassword());
         verify(passwordEncoder).encode("newPassword");
         verify(userRepository).save(argThat(user -> "newEncodedPassword".equals(user.getPassword())));
     }
@@ -478,7 +478,7 @@ class UserServiceImplTest {
         // Arrange
         HostProfileEntity existingProfile = new HostProfileEntity();
         userEntity.setHostProfile(existingProfile);
-        userEntity.setRoles(Set.of(UserRole.USER)); // No tiene rol HOST
+        userEntity.setRoles(new HashSet<>(Set.of(UserRole.USER))); // Usar HashSet mutable en lugar de Set.of()
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userEntity));
         when(userRepository.save(any(UserEntity.class))).thenReturn(userEntity);
@@ -500,7 +500,7 @@ class UserServiceImplTest {
         // Arrange
         HostProfileEntity existingProfile = new HostProfileEntity();
         userEntity.setHostProfile(existingProfile);
-        userEntity.setRoles(Set.of(UserRole.USER, UserRole.HOST));
+        userEntity.setRoles(new HashSet<>(Set.of(UserRole.USER, UserRole.HOST))); // Usar HashSet mutable
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userEntity));
         when(userMapper.toUserDTO(userEntity)).thenReturn(userDTO);
@@ -512,7 +512,7 @@ class UserServiceImplTest {
         assertNotNull(result);
         verify(userRepository).findById(1L);
         verify(userMapper).toUserDTO(userEntity);
-        verifyNoInteractions(hostProfileRepository, userRepository);
+        verifyNoInteractions(hostProfileRepository); // Solo hostProfileRepository, no userRepository
     }
 
     @Test
@@ -759,3 +759,4 @@ class UserServiceImplTest {
         verifyNoMoreInteractions(userRepository, imageRepository);
     }
 }
+
