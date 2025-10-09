@@ -13,11 +13,11 @@ import java.util.Optional;
 public interface UserService {
     UserDTO register(RegisterUserDTO dto);
     UserDTO create(CreateUserDTO dto);
-    UserDTO edit(Long userId, EditUserDTO dto);
+    UserDTO editProfile(Long userId, EditUserDTO dto); // Cambiar para recibir userId
     Optional<UserDTO> findById(Long id);
     void enable(String userId, boolean enable);
-    void delete(String userId);
-    void changePassword(String userId, String oldPassword, String newPassword);
+    void deleteProfile(Long userId); // Cambiar para recibir userId
+    void changePassword(Long userId, String oldPassword, String newPassword);
 
     // Nuevos métodos para la funcionalidad de HOST
     UserDTO convertToHost(Long userId);

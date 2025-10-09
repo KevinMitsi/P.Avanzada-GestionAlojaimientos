@@ -6,10 +6,7 @@ import com.avanzada.alojamientos.DTO.auth.RegisterUserDTO;
 import com.avanzada.alojamientos.DTO.user.UserDTO;
 
 import com.avanzada.alojamientos.entities.UserEntity;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
@@ -58,6 +55,7 @@ public interface UserMapper {
     UserEntity toEntity(RegisterUserDTO registerUserDTO);
 
     // Update Entity from EditUserDTO
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "password", ignore = true)
@@ -73,7 +71,6 @@ public interface UserMapper {
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "hostProfile", ignore = true)
     @Mapping(target = "profileImage", ignore = true)
-    @Mapping(target = "description", ignore = true)
     @Mapping(target = "documentsUrl", ignore = true)
     @Mapping(target = "dateOfBirth", source = "dateBirth")
     @Mapping(target = "roles", ignore = true)
