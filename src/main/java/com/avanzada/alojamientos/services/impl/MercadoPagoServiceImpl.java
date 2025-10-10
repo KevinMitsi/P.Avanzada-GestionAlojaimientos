@@ -42,21 +42,6 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
                 .orElseThrow(() -> new ReservationNotFoundException("Reserva no encontrada con id=" + reservationId));
 
         BigDecimal totalAmount = reservation.getTotalPrice();
-        System.out.println("===== DATOS DE LA RESERVA ENVIADOS A MERCADO PAGO =====");
-        System.out.println("ID de reserva: " + reservation.getId());
-        System.out.println("Título del alojamiento: " +
-                (reservation.getAccommodation() != null ? reservation.getAccommodation().getTitle() : "N/A"));
-        System.out.println("Descripción: De " + reservation.getStartDate() + " al " + reservation.getEndDate());
-        System.out.println("Usuario: " +
-                (reservation.getUser() != null ? reservation.getUser().getEmail() : "Usuario sin correo"));
-        System.out.println("Total a pagar: " + reservation.getTotalPrice());
-        System.out.println("Estado actual: " + reservation.getStatus());
-        System.out.println("Fecha de inicio: " + reservation.getStartDate());
-        System.out.println("Fecha de fin: " + reservation.getEndDate());
-        System.out.println("Alojamiento ID: " +
-                (reservation.getAccommodation() != null ? reservation.getAccommodation().getId() : "N/A"));
-        System.out.println("========================================================");
-
 
         // 3️⃣ Crear el ítem (producto o servicio)
         PreferenceItemRequest item = PreferenceItemRequest.builder()
@@ -79,12 +64,11 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
         PreferenceClient client = new PreferenceClient();
         Preference preference = client.create(preferenceRequest);
 
-        // 5️⃣ Crear la preferencia
 
 
 
 
-        // 6️⃣ Registrar el pago en tu base de datos con estado PENDING
+        // 6️ Registrar el pago en tu base de datos con estado PENDING
         PaymentDTO paymentDTO = new PaymentDTO(
                 null,
                 reservationId,
