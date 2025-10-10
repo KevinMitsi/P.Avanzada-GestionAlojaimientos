@@ -35,7 +35,7 @@ public class MercadoPagoController {
             @PathVariable Long reservationId,
             @RequestParam(name = "status", required = false) String status) {
 
-        if (!"approved".equalsIgnoreCase(status)) {
+        if (!"COMPLETED".equalsIgnoreCase(status)) {
             return ResponseEntity.badRequest().body("Pago no aprobado");
         }
 
@@ -48,7 +48,7 @@ public class MercadoPagoController {
         PaymentDTO payment = payments.get(0);
         paymentService.confirmPayment(payment.id());
 
-        return ResponseEntity.ok("✅ Pago confirmado y actualizado correctamente en la base de datos");
+        return ResponseEntity.ok(" Pago confirmado y actualizado correctamente en la base de datos");
     }
 
 }

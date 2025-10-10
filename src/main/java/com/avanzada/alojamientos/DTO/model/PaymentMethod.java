@@ -2,5 +2,5 @@ package com.avanzada.alojamientos.DTO.model;
 
 
 public enum PaymentMethod {
-    CARD, MERCADO_PAGO, CASH
+    CARD, PAYPAL, CASH
 }

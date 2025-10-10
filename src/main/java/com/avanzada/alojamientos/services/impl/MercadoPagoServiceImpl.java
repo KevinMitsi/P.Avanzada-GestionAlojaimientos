@@ -70,6 +70,7 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
                 .unitPrice(reservation.getTotalPrice())
                 .build();
 
+
         List<PreferenceItemRequest> items = new ArrayList<>();
         items.add(item);
         PreferenceRequest preferenceRequest = PreferenceRequest.builder()
@@ -88,7 +89,7 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
                 null,
                 reservationId,
                 totalAmount,
-                PaymentMethod.MERCADO_PAGO, // tu enum de métodos
+                PaymentMethod.PAYPAL, // tu enum de métodos
                 PaymentStatus.PENDING,
                 null
         );
