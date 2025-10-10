@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -214,6 +215,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_me_withAuthenticatedUser_shouldReturn200_andUserInfo() throws Exception {
         // Arrange
         UserDTO userDTO = new UserDTO(
@@ -259,6 +261,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_logout_withAuthenticatedUser_shouldReturn200() throws Exception {
         // Arrange
         doNothing().when(authService).logout();
@@ -310,6 +313,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_becomeHost_withAuthenticatedUser_shouldReturn200_andUpdatedUser() throws Exception {
         // Arrange
         UserDTO updatedUser = new UserDTO(

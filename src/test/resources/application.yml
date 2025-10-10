@@ -1,21 +1,24 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/alojamientos_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: Berpi2003
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
     show-sql: true
+    defer-datasource-initialization: false
   sql:
     init:
-      mode: always
-      data-locations: classpath:import.sql
+      mode: never
+  h2:
+    console:
+      enabled: true
 
 logging:
   level:

@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -59,6 +60,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void put_update_withInvalidBody_shouldReturn400_andNotCallService() throws Exception {
         // Arrange: cuerpo inválido para UpdateAccommodationDTO
         String invalidJson = """
@@ -89,6 +91,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void put_update_withValidBody_shouldReturn200() throws Exception {
         // Arrange: JSON válido
         String validJson = """
@@ -117,6 +120,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void get_metrics_withInvalidDateParam_shouldReturn400_fromControllerAdvice() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/accommodations/{id}/metrics", 5L)
@@ -135,6 +139,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void get_findByHost_isSecuredNormally_butHereWeFocusOnValidationAndSkipFilters() throws Exception {
         // Arrange
         when(currentUserService.getCurrentHostId()).thenReturn(10L);
@@ -169,6 +174,7 @@ class AccommodationControllerTest {
     // --- Nuevos tests para cobertura completa ---
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void post_create_withInvalidBody_shouldReturn400_andNotCallService() throws Exception {
         String invalidJson = """
             {
@@ -193,6 +199,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void post_create_withValidBody_shouldReturn201_andCallService() throws Exception {
         String validJson = """
             {
@@ -254,6 +261,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void delete_delete_shouldReturn204_andCallService() throws Exception {
         doNothing().when(accommodationService).delete(9L);
 
@@ -264,6 +272,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void get_metrics_withValidDates_shouldReturn200_andCallService() throws Exception {
         when(accommodationService.getMetrics(eq(3L), any(), any()))
                 .thenReturn(new AccommodationMetrics(0L, 0.0, BigDecimal.ZERO));
@@ -277,6 +286,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void get_metrics_withoutDates_shouldReturn200_andCallService() throws Exception {
         when(accommodationService.getMetrics(eq(4L), isNull(), isNull()))
                 .thenReturn(new AccommodationMetrics(10L, 4.5, new BigDecimal("123.45")));
@@ -288,6 +298,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void post_uploadImages_shouldReturn200_andCallServiceImpl() throws Exception {
         // Asegurar que el bean es un mock de la implementación concreta para que el cast en el controller funcione
         AccommodationServiceImpl serviceImplMock = (AccommodationServiceImpl) accommodationService;
@@ -308,6 +319,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void delete_deleteImage_shouldReturn204_andCallServiceImpl() throws Exception {
         AccommodationServiceImpl serviceImplMock = (AccommodationServiceImpl) accommodationService;
         doNothing().when(serviceImplMock).deleteImageFromCloudinary(12L, 99L);

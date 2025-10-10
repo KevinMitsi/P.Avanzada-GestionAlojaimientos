@@ -120,9 +120,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
     @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     Page<AccommodationEntity> findByHostIdAndSoftDeletedFalse(Long hostId, Pageable pageable);
 
-    /**
-     * Método findAll con EntityGraph limitado para evitar MultipleBagFetchException
-     */
+
     @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     @NonNull
     Page<AccommodationEntity> findAll(@NonNull Pageable pageable);

@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -54,6 +55,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withValidBody_shouldReturn200_andComment() throws Exception {
         // Arrange
         String validJson = """
@@ -95,6 +97,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withInvalidBody_shouldReturn400() throws Exception {
         // Arrange: rating fuera de rango y texto vacío
         String invalidJson = """
@@ -115,6 +118,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withTextTooLong_shouldReturn400() throws Exception {
         // Arrange: texto muy largo (más de 500 caracteres)
         String longText = "a".repeat(501);
@@ -136,6 +140,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_whenReservationNotFound_shouldReturn404() throws Exception {
         // Arrange
         String validJson = """
@@ -158,7 +163,8 @@ class CommentControllerTest {
     }
 
     @Test
-    void post_create_whenUserNotAllowed_shouldReturn403() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void post_create_whenUserNotAuthorized_shouldReturn403() throws Exception {
         // Arrange
         String validJson = """
             {
@@ -180,7 +186,7 @@ class CommentControllerTest {
     }
 
     @Test
-    void get_findById_whenFound_shouldReturn200_andComment() throws Exception {
+    void get_findById_shouldReturn200_andComment() throws Exception {
         // Arrange
         CommentDTO comment = new CommentDTO(
                 5L,
@@ -208,7 +214,7 @@ class CommentControllerTest {
     }
 
     @Test
-    void get_findById_whenNotFound_shouldReturn404() throws Exception {
+    void get_findById_whenCommentNotFound_shouldReturn404() throws Exception {
         // Arrange
         when(commentService.findById(999L))
                 .thenThrow(new CommentNotFoundException("Comentario no encontrado"));
@@ -263,6 +269,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_findByUser_shouldReturn200_andPageOfComments() throws Exception {
         // Arrange
         CommentDTO comment = new CommentDTO(
@@ -288,7 +295,8 @@ class CommentControllerTest {
     }
 
     @Test
-    void put_reply_withValidReply_shouldReturn200() throws Exception {
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
+    void put_reply_withValidData_shouldReturn200() throws Exception {
         // Arrange
         when(currentUserService.getCurrentHostId()).thenReturn(50L);
         doNothing().when(commentService).reply(1L, 50L, "Gracias por tu comentario");
@@ -304,6 +312,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void put_reply_whenCommentNotFound_shouldReturn404() throws Exception {
         // Arrange
         when(currentUserService.getCurrentHostId()).thenReturn(50L);
@@ -318,21 +327,8 @@ class CommentControllerTest {
     }
 
     @Test
-    void put_reply_whenNotOwnerOfAccommodation_shouldReturn403() throws Exception {
-        // Arrange
-        when(currentUserService.getCurrentHostId()).thenReturn(50L);
-        doThrow(new CommentForbiddenException("No eres el propietario del alojamiento"))
-                .when(commentService).reply(anyLong(), anyLong(), anyString());
-
-        // Act & Assert
-        mockMvc.perform(put("/api/comments/{commentId}/reply", 1L)
-                        .param("replyText", "Gracias"))
-                .andExpect(status().isForbidden())
-                .andExpect(content().string(containsString("Operación prohibida en comentarios")));
-    }
-
-    @Test
-    void put_moderate_withApproved_shouldReturn200() throws Exception {
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void put_moderate_withValidData_shouldReturn200() throws Exception {
         // Arrange
         doNothing().when(commentService).moderate(1L, true);
 

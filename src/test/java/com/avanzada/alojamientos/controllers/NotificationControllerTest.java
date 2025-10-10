@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -51,6 +52,7 @@ class NotificationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void post_create_withValidBody_shouldReturn201_andNotification() throws Exception {
         // Arrange
         String validJson = """
@@ -91,6 +93,7 @@ class NotificationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void post_create_withInvalidBody_shouldReturn400() throws Exception {
         // Arrange: userId null, título vacío, body vacío
         String invalidJson = """
@@ -113,6 +116,7 @@ class NotificationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void post_create_withMissingUserId_shouldReturn400() throws Exception {
         // Arrange
         String invalidJson = """
@@ -133,6 +137,7 @@ class NotificationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_findById_whenFound_shouldReturn200_andNotification() throws Exception {
         // Arrange
         NotificationDTO notification = new NotificationDTO(
@@ -160,6 +165,7 @@ class NotificationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_findById_whenNotFound_shouldReturn404() throws Exception {
         // Arrange
         when(notificationService.findById(999L)).thenReturn(Optional.empty());
@@ -172,7 +178,8 @@ class NotificationControllerTest {
     }
 
     @Test
-    void get_findByCurrentUser_shouldReturn200_andListOfNotifications() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void get_getNotificationsByCurrentUser_shouldReturn200_andListOfNotifications() throws Exception {
         // Arrange
         NotificationDTO notification1 = new NotificationDTO(
                 1L, 100L, "Notificación 1", "Cuerpo 1", NotificationType.NEW_COMMENT, null, false, "2025-01-01T00:00:00Z"
@@ -202,7 +209,8 @@ class NotificationControllerTest {
     }
 
     @Test
-    void get_findByCurrentUser_whenNoNotifications_shouldReturn200_andEmptyList() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void get_getNotificationsByCurrentUser_whenNoNotifications_shouldReturn200_andEmptyList() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
         when(notificationService.findByUser(100L)).thenReturn(List.of());
@@ -219,7 +227,8 @@ class NotificationControllerTest {
     }
 
     @Test
-    void put_markAsRead_withValidId_shouldReturn200() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void put_markAsRead_shouldReturn200() throws Exception {
         // Arrange
         doNothing().when(notificationService).markAsRead(1L);
 
@@ -231,6 +240,7 @@ class NotificationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_markAsRead_whenNotificationNotFound_shouldReturn404() throws Exception {
         // Arrange
         doThrow(new NotificationNotFoundException("Notificación no encontrada"))
@@ -243,7 +253,8 @@ class NotificationControllerTest {
     }
 
     @Test
-    void post_sendEmail_withValidBody_shouldReturn200() throws Exception {
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    void post_sendEmail_withValidData_shouldReturn200() throws Exception {
         // Arrange
         String validJson = """
             {

@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -50,6 +51,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_add_withValidAccommodation_shouldReturn200_andFavorite() throws Exception {
         // Arrange
         FavoriteAccommodationDTO accommodationDTO = new FavoriteAccommodationDTO(
@@ -87,6 +89,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_add_whenAccommodationNotFound_shouldReturn404() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
@@ -100,6 +103,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_add_whenFavoriteAlreadyExists_shouldReturn409() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
@@ -113,6 +117,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void delete_remove_withValidFavorite_shouldReturn204() throws Exception {
         // Arrange
         doNothing().when(favoriteService).remove(1L);
@@ -125,6 +130,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void delete_remove_whenFavoriteNotFound_shouldReturn404() throws Exception {
         // Arrange
         doThrow(new FavoriteNotFoundException("Favorito no encontrado"))
@@ -137,6 +143,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_findByUser_shouldReturn200_andListOfFavorites() throws Exception {
         // Arrange
         FavoriteAccommodationDTO accommodation1 = new FavoriteAccommodationDTO(
@@ -168,6 +175,7 @@ class FavoriteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_findByUser_whenNoFavorites_shouldReturn200_andEmptyList() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
