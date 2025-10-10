@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,6 +63,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void get_findById_whenFound_shouldReturn200_andUser() throws Exception {
         // Arrange
         UserDTO user = new UserDTO(
@@ -85,6 +87,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void get_findById_whenNotFound_shouldReturn200_withEmptyOptional() throws Exception {
         // Arrange
         when(userService.findById(999L)).thenReturn(Optional.empty());
@@ -97,6 +100,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void put_enable_withTrueValue_shouldReturn200() throws Exception {
         // Arrange
         doNothing().when(userService).enable("1", true);
@@ -110,6 +114,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void put_enable_withFalseValue_shouldReturn200() throws Exception {
         // Arrange
         doNothing().when(userService).enable("1", false);
@@ -123,6 +128,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void put_enable_whenUserNotFound_shouldReturn404() throws Exception {
         // Arrange
         doThrow(new UserNotFoundException("Usuario no encontrado"))
@@ -136,6 +142,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_editProfile_withValidData_shouldReturn200_andUpdatedUser() throws Exception {
         // Arrange
         String validJson = """
@@ -172,6 +179,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_editProfile_withInvalidData_shouldReturn400() throws Exception {
         // Arrange: dateBirth en el futuro, name muy largo
         String invalidJson = """
@@ -194,6 +202,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_editProfile_withDescriptionTooLong_shouldReturn400() throws Exception {
         // Arrange: description mayor a 500 caracteres
         String longDescription = "a".repeat(501);
@@ -217,6 +226,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void delete_deleteProfile_shouldReturn204() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(1L);
@@ -231,6 +241,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void delete_deleteProfile_whenUserNotFound_shouldReturn404() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(999L);
@@ -244,7 +255,8 @@ class UserControllerTest {
     }
 
     @Test
-    void put_changePassword_withValidPasswords_shouldReturn202() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void put_changePassword_withValidData_shouldReturn202() throws Exception {
         // Arrange
         String validJson = """
             {
@@ -268,6 +280,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_changePassword_withInvalidNewPassword_shouldReturn400() throws Exception {
         // Arrange: nueva contraseña sin mayúscula
         String invalidJson = """
@@ -288,6 +301,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_changePassword_withWrongCurrentPassword_shouldReturn401() throws Exception {
         // Arrange
         String validJson = """
@@ -310,6 +324,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_uploadDocuments_withValidFiles_shouldReturn201_andUrls() throws Exception {
         // Arrange
         MockMultipartFile doc1 = new MockMultipartFile(
@@ -343,6 +358,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_uploadDocuments_whenUploadFails_shouldReturn500() throws Exception {
         // Arrange
         MockMultipartFile doc = new MockMultipartFile(
@@ -361,7 +377,8 @@ class UserControllerTest {
     }
 
     @Test
-    void delete_deleteDocument_withValidIndex_shouldReturn204() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void delete_deleteDocument_shouldReturn204() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(1L);
         doNothing().when(userDocumentService).deleteDocument(1L, 0L);
@@ -375,7 +392,8 @@ class UserControllerTest {
     }
 
     @Test
-    void delete_deleteDocument_whenDeleteFails_shouldReturn500() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void delete_deleteDocument_whenDeletionFails_shouldReturn500() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(1L);
         doThrow(new DeletingStorageException("Error al eliminar el documento"))
@@ -388,7 +406,8 @@ class UserControllerTest {
     }
 
     @Test
-    void post_uploadProfileImage_withValidImage_shouldReturn201_andUrl() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void post_uploadProfileImage_withValidFile_shouldReturn201_andUrl() throws Exception {
         // Arrange
         MockMultipartFile image = new MockMultipartFile(
                 "image", "profile.jpg", MediaType.IMAGE_JPEG_VALUE, "Image content".getBytes()
@@ -410,6 +429,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_uploadProfileImage_whenUploadFails_shouldReturn500() throws Exception {
         // Arrange
         MockMultipartFile image = new MockMultipartFile(
@@ -428,6 +448,7 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void delete_deleteProfileImage_shouldReturn204() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(1L);
@@ -442,7 +463,8 @@ class UserControllerTest {
     }
 
     @Test
-    void delete_deleteProfileImage_whenDeleteFails_shouldReturn500() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void delete_deleteProfileImage_whenDeletionFails_shouldReturn500() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(1L);
         doThrow(new DeletingStorageException("Error al eliminar la imagen"))
@@ -487,3 +509,4 @@ class UserControllerTest {
         }
     }
 }
+

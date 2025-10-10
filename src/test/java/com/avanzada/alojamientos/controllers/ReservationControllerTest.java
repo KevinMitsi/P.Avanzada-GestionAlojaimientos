@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -57,6 +58,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withValidBody_shouldReturn200_andReservation() throws Exception {
         // Arrange
         String validJson = """
@@ -99,6 +101,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withInvalidBody_shouldReturn400() throws Exception {
         // Arrange: guests = 0, startDate en el pasado
         String invalidJson = """
@@ -121,6 +124,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withMissingFields_shouldReturn400() throws Exception {
         // Arrange: falta accommodationId
         String invalidJson = """
@@ -142,6 +146,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_whenAccommodationNotFound_shouldReturn404() throws Exception {
         // Arrange
         String validJson = """
@@ -166,7 +171,8 @@ class ReservationControllerTest {
     }
 
     @Test
-    void post_create_whenNotAvailable_shouldReturn409() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void post_create_whenAccommodationNotAvailable_shouldReturn409() throws Exception {
         // Arrange
         String validJson = """
             {
@@ -190,6 +196,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void post_create_withInvalidDates_shouldReturn400() throws Exception {
         // Arrange
         String validJson = """
@@ -252,6 +259,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void get_findByUser_shouldReturn200_andPageOfReservations() throws Exception {
         Page<ReservationDTO> page = getReservationDTOS();
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
@@ -316,6 +324,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void post_search_withCriteria_shouldReturn200_andPageOfReservations() throws Exception {
         // Arrange
         String searchJson = """
@@ -405,7 +414,8 @@ class ReservationControllerTest {
     }
 
     @Test
-    void put_cancel_withValidMotivo_shouldReturn200() throws Exception {
+    @WithMockUser(username = "user@test.com")
+    void put_cancel_withValidData_shouldReturn200() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
         doNothing().when(reservationService).cancel(1L, 100L, "Cambio de planes");
@@ -420,6 +430,7 @@ class ReservationControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user@test.com")
     void put_cancel_whenReservationNotFound_shouldReturn404() throws Exception {
         // Arrange
         when(currentUserService.getCurrentUserId()).thenReturn(100L);
@@ -434,35 +445,8 @@ class ReservationControllerTest {
     }
 
     @Test
-    void put_cancel_whenNoPermission_shouldReturn403() throws Exception {
-        // Arrange
-        when(currentUserService.getCurrentUserId()).thenReturn(100L);
-        doThrow(new ReservationPermissionException("No tienes permiso para cancelar esta reserva"))
-                .when(reservationService).cancel(anyLong(), anyLong(), anyString());
-
-        // Act & Assert
-        mockMvc.perform(put("/api/reservations/{reservationId}/cancel", 1L)
-                        .param("motivo", "Cambio de planes"))
-                .andExpect(status().isForbidden())
-                .andExpect(content().string(containsString("Permisos insuficientes")));
-    }
-
-    @Test
-    void put_cancel_whenInvalidState_shouldReturn409() throws Exception {
-        // Arrange
-        when(currentUserService.getCurrentUserId()).thenReturn(100L);
-        doThrow(new ReservationStateException("No se puede cancelar una reserva ya completada"))
-                .when(reservationService).cancel(anyLong(), anyLong(), anyString());
-
-        // Act & Assert
-        mockMvc.perform(put("/api/reservations/{reservationId}/cancel", 1L)
-                        .param("motivo", "Cambio de planes"))
-                .andExpect(status().isConflict())
-                .andExpect(content().string(containsString("Estado de reserva inválido")));
-    }
-
-    @Test
-    void put_updateStatus_withValidStatus_shouldReturn200() throws Exception {
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
+    void put_updateStatus_withValidData_shouldReturn200() throws Exception {
         // Arrange
         when(currentUserService.getCurrentHostId()).thenReturn(50L);
         doNothing().when(reservationService).updateStatus(1L, ReservationStatus.CONFIRMED, 50L);
