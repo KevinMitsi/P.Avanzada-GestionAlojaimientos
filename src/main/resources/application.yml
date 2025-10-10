@@ -9,7 +9,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/alojamientos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${MYSQL_ROOT_USER:root}
-    password: ${MYSQL_ROOT_PASSWORD:Berpi2003}
+    password: ${MYSQL_ROOT_PASSWORD:admin}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -43,3 +43,7 @@ logging:
   level:
     com.avanzada.alojamientos.security: DEBUG
     org.springframework.security: DEBUG
+
+mercadopago:
+  access:
+    token: APP_USR-6031776921093655-100900-11e4ceef9cd55ec049276ca19a7f8a81-2914163040

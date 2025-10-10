@@ -9,4 +9,5 @@ public interface PaymentService {
     PaymentDTO register(PaymentDTO dto);
     Optional<PaymentDTO> findById(Long id);
     List<PaymentDTO> findByReservation(Long reservationId);
+    PaymentDTO confirmPayment(Long paymentId);
 }
