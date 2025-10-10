@@ -5,11 +5,14 @@ import com.avanzada.alojamientos.DTO.auth.PasswordResetRequestDTO;
 import com.avanzada.alojamientos.DTO.notification.EmailDTO;
 import com.avanzada.alojamientos.entities.PasswordResetTokenEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
+import com.avanzada.alojamientos.exceptions.InvalidTokenException;
 import com.avanzada.alojamientos.exceptions.RecoveryTokenException;
 import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.repositories.PasswordResetTokenRepository;
 import com.avanzada.alojamientos.repositories.UserRepository;
+import com.avanzada.alojamientos.security.CustomUserDetailsService;
+import com.avanzada.alojamientos.security.JwtService;
 import com.avanzada.alojamientos.services.EmailNotificationService;
 import com.avanzada.alojamientos.services.PasswordResetService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
@@ -31,6 +37,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailNotificationService notificationService;
+    private final CustomUserDetailsService userDetailsService;
+    private final JwtService jwtService;
 
     private static final int TOKEN_EXPIRATION_MINUTES = 15;
 
@@ -69,6 +77,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         log.info("Password reset token created for user ID: {} - Token expires at: {}",
                 user.getId(), tokenEntity.getExpiresAt());
 
+        String recoveryCode = generateRecoveryCode();
+
         // 7. Enviar email con el código de recuperación
         sendPasswordResetEmail(user, recoveryCode);
 
@@ -79,6 +89,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Transactional
     public void resetPassword(PasswordResetDto dto) {
         log.info("Attempting password reset with provided token");
+
+        String userEmail = jwtService.extractUsername(dto.token());
 
         // 1. Extraer el email del token JWT
         try {

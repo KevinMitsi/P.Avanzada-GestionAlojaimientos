@@ -30,4 +30,8 @@ public class PaymentController {
     public List<PaymentDTO> findByReservation(@PathVariable Long reservationId) {
         return paymentService.findByReservation(reservationId);
     }
+    @PutMapping("/{id}/confirm")
+    public PaymentDTO confirmPayment(@PathVariable Long id) {
+        return paymentService.confirmPayment(id);
+    }
 }
