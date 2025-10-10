@@ -12,8 +12,8 @@ public record   CommentDTO (
         String text,
         LocalDateTime createdAt,
         Boolean isModerated,
-        Integer reservationId,
-        Integer accommodationId,
+        Long reservationId,
+        Long accommodationId,
         Long userId,
         ReplyHostDTO hostReply
 ){

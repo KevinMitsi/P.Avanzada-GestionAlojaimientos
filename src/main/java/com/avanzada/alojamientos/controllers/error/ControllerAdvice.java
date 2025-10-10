@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -266,6 +267,32 @@ public class ControllerAdvice {
                 HttpStatus.BAD_REQUEST.value(),
                 "Error de validación en " + objectName,
                 validationDetails
+        );
+
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    // Manejador para errores de parseo de JSON
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ResponseErrorDTO> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        String message = ex.getMessage();
+        String detailedMessage = "Error al leer el cuerpo de la solicitud";
+
+        if (message != null) {
+            if (message.contains("JSON parse error")) {
+                detailedMessage = "El formato del JSON es inválido";
+            } else if (message.contains("Required request body is missing")) {
+                detailedMessage = "El cuerpo de la solicitud es requerido";
+            }
+        }
+
+        ResponseErrorDTO error = new ResponseErrorDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                "Error de validación",
+                Map.of(
+                        "tipo", "HttpMessageNotReadableException",
+                        KEY_IN_MAP, detailedMessage
+                )
         );
 
         return ResponseEntity.badRequest().body(error);

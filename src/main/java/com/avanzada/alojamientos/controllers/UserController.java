@@ -1,7 +1,9 @@
 package com.avanzada.alojamientos.controllers;
 
 
+import com.avanzada.alojamientos.DTO.auth.PasswordChangeDTO;
 import com.avanzada.alojamientos.DTO.user.UserDTO;
+import com.avanzada.alojamientos.DTO.user.EditUserDTO;
 import com.avanzada.alojamientos.exceptions.DeletingStorageException;
 import com.avanzada.alojamientos.exceptions.UploadingStorageException;
 import com.avanzada.alojamientos.security.CurrentUserService;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,19 +39,28 @@ public class UserController {
         userService.enable(userId, enable);
     }
 
-    @DeleteMapping("/{userId}")
-    public void delete(@PathVariable String userId) {
-        userService.delete(userId);
+    @PutMapping
+    public ResponseEntity<UserDTO> editProfile(@Valid @RequestBody EditUserDTO editUserDTO) {
+        Long userId = currentUserService.getCurrentUserId();
+        UserDTO updatedUser = userService.editProfile(userId, editUserDTO);
+        return ResponseEntity.ok(updatedUser);
     }
 
-    @PutMapping("/{userId}/password")
-    public void changePassword(@PathVariable String userId,
-                               @RequestParam String oldPassword,
-                               @RequestParam String newPassword) {
-        userService.changePassword(userId, oldPassword, newPassword);
+    @DeleteMapping
+    public ResponseEntity<Void> deleteProfile() {
+        Long userId = currentUserService.getCurrentUserId();
+        userService.deleteProfile(userId);
+        return ResponseEntity.noContent().build();
     }
 
-    // Endpoints de documentos del usuario autenticado
+    @PutMapping("/password")
+    public ResponseEntity<String> changePassword(@RequestBody @Valid PasswordChangeDTO passwordChangeDTO) {
+        userService.changePassword(currentUserService.getCurrentUserId()
+                , passwordChangeDTO.currentPassword()
+                , passwordChangeDTO.newPassword());
+        return ResponseEntity.accepted().body("Contraseña cambiada exitosamente");
+    }
+
     @PostMapping("/documents")
     public ResponseEntity<List<String>> uploadDocuments(
             @RequestParam("documents") List<MultipartFile> documentFiles) throws UploadingStorageException {
@@ -64,7 +76,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoints para foto de perfil
     @PostMapping("/profile-image")
     public ResponseEntity<String> uploadProfileImage(
             @RequestParam("image") MultipartFile imageFile) throws UploadingStorageException {
