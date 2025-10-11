@@ -11,5 +11,5 @@ public interface NotificationService {
     NotificationDTO create(CreateNotificationDTO createNotificationDTO);
     Optional<NotificationDTO> findById(Long id);
     List<NotificationDTO> findByUser(Long userId);
-    void markAsRead(Long notificationId);
+    void markAsRead(Long userId, Long notificationId);
 }

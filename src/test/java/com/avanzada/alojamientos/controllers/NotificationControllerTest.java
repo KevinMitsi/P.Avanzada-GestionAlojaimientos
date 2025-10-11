@@ -230,26 +230,31 @@ class NotificationControllerTest {
     @WithMockUser(username = "user@test.com")
     void put_markAsRead_shouldReturn200() throws Exception {
         // Arrange
-        doNothing().when(notificationService).markAsRead(1L);
+        when(currentUserService.getCurrentUserId()).thenReturn(100L);
+        doNothing().when(notificationService).markAsRead(100L, 1L);
 
         // Act & Assert
         mockMvc.perform(put("/api/notifications/{id}/read", 1L))
                 .andExpect(status().isOk());
 
-        verify(notificationService, times(1)).markAsRead(1L);
+        verify(currentUserService, times(1)).getCurrentUserId();
+        verify(notificationService, times(1)).markAsRead(100L, 1L);
     }
 
     @Test
     @WithMockUser(username = "user@test.com")
     void put_markAsRead_whenNotificationNotFound_shouldReturn404() throws Exception {
         // Arrange
+        when(currentUserService.getCurrentUserId()).thenReturn(100L);
         doThrow(new NotificationNotFoundException("Notificación no encontrada"))
-                .when(notificationService).markAsRead(anyLong());
+                .when(notificationService).markAsRead(anyLong(), anyLong());
 
         // Act & Assert
         mockMvc.perform(put("/api/notifications/{id}/read", 999L))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("Notificación no encontrada")));
+
+        verify(currentUserService, times(1)).getCurrentUserId();
     }
 
     @Test

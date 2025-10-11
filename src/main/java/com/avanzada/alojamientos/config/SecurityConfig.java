@@ -65,9 +65,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/host/**").hasAnyRole(HOST_ROLE, ADMIN_ROLE)
 
                         // Operaciones específicas de usuarios HOST
-                        .requestMatchers("/api/accommodations/create").hasRole(HOST_ROLE)
-                        .requestMatchers("/api/accommodations/*/edit").hasRole(HOST_ROLE)
-                        .requestMatchers("/api/accommodations/*/delete").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.POST, "/api/accommodations").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.PUT, "/api/accommodations/**").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.DELETE, "/api/accommodations/**").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.POST, "/api/accommodations/*/images/**").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.PUT, "/api/comments/**").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole(HOST_ROLE)
+
 
                         //Admin users
                         .requestMatchers("/api/users/admin/**").hasRole(ADMIN_ROLE)

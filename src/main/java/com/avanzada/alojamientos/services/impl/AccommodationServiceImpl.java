@@ -3,6 +3,7 @@ package com.avanzada.alojamientos.services.impl;
 import com.avanzada.alojamientos.DTO.accommodation.*;
 
 import com.avanzada.alojamientos.exceptions.SearchingAccommodationException;
+import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.mappers.AccommodationMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.services.AccommodationService;
@@ -65,11 +66,12 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     @Override
     @Transactional
-    public AccommodationDTO update(Long accommodationId, UpdateAccommodationDTO dto) {
+    public AccommodationDTO update(Long userId, Long accommodationId, UpdateAccommodationDTO dto) {
         validateAccommodationId(accommodationId);
 
         AccommodationEntity entity = findAccommodationEntity(accommodationId);
         validateNotDeleted(entity);
+        validateOwnership(entity, userId);
 
         accommodationMapper.updateEntityFromDTO(dto, entity);
 
@@ -103,7 +105,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     @Override
     @Transactional
-    public void delete(Long accommodationId) {
+    public void delete(Long userId, Long accommodationId) {
         if (accommodationId == null) {
             log.warn("delete called with null id");
             return;
@@ -114,9 +116,10 @@ public class AccommodationServiceImpl implements AccommodationService {
             return;
         }
 
+        AccommodationEntity entity = findAccommodationEntity(accommodationId);
+        validateOwnership(entity, userId);
         validateNoFutureReservations(accommodationId);
 
-        AccommodationEntity entity = findAccommodationEntity(accommodationId);
         performSoftDelete(entity);
 
         log.info("Soft deleted accommodation {}", accommodationId);
@@ -164,13 +167,14 @@ public class AccommodationServiceImpl implements AccommodationService {
 
 
     @Transactional
-    public List<String> uploadAndAddImages(Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingStorageException {
+    public List<String> uploadAndAddImages(Long userId, Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingStorageException {
         if (imageFiles == null || imageFiles.isEmpty()) {
             return Collections.emptyList();
         }
 
         AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
         validateNotDeleted(accommodation);
+        validateOwnership(accommodation, userId);
 
         List<ImageEntity> currentImages = getCurrentImages(accommodation);
         validateImageCapacity(currentImages, imageFiles.size());
@@ -215,7 +219,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
 
     @Transactional
-    public void deleteImageFromCloudinary(Long accommodationId, Long imageId) throws DeletingStorageException {
+    public void deleteImageFromCloudinary(Long userId, Long accommodationId, Long imageId) throws DeletingStorageException {
         if (imageId == null) {
             throw new DeletingStorageException("imageId is required");
         }
@@ -224,6 +228,9 @@ public class AccommodationServiceImpl implements AccommodationService {
         if (Boolean.FALSE.equals(accommodationRepository.existsByIdAndSoftDeletedFalse(accommodationId))) {
             throw new DeletingStorageException("Accommodation not found with ID: " + accommodationId);
         }
+
+        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
+        validateOwnership(accommodation, userId);
 
         ImageEntity image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new DeletingStorageException("Image not found with ID: " + imageId));
@@ -276,6 +283,12 @@ public class AccommodationServiceImpl implements AccommodationService {
     private void validateNotDeleted(AccommodationEntity entity) {
         if (Boolean.TRUE.equals(entity.getSoftDeleted())) {
             throw new IllegalStateException("Cannot operate on deleted accommodation");
+        }
+    }
+
+    private void validateOwnership(AccommodationEntity entity, Long userId) {
+        if (entity.getHost() == null || !Objects.equals(entity.getHost().getId(), userId)) {
+            throw new UnauthorizedException("User does not have permission to modify this accommodation");
         }
     }
 

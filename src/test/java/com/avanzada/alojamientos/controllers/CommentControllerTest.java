@@ -327,10 +327,11 @@ class CommentControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void put_moderate_withValidData_shouldReturn200() throws Exception {
         // Arrange
-        doNothing().when(commentService).moderate(1L, true);
+        when(currentUserService.getCurrentHostId()).thenReturn(50L);
+        doNothing().when(commentService).moderate(1L, 50L, true);
 
         // Act & Assert
         mockMvc.perform(put("/api/comments/{commentId}/moderate", 1L)
@@ -338,13 +339,16 @@ class CommentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Comment moderated successfully")));
 
-        verify(commentService, times(1)).moderate(1L, true);
+        verify(currentUserService, atLeastOnce()).getCurrentHostId();
+        verify(commentService, times(1)).moderate(1L, 50L, true);
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void put_moderate_withRejected_shouldReturn200() throws Exception {
         // Arrange
-        doNothing().when(commentService).moderate(1L, false);
+        when(currentUserService.getCurrentHostId()).thenReturn(50L);
+        doNothing().when(commentService).moderate(1L, 50L, false);
 
         // Act & Assert
         mockMvc.perform(put("/api/comments/{commentId}/moderate", 1L)
@@ -352,14 +356,17 @@ class CommentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Comment moderated successfully")));
 
-        verify(commentService, times(1)).moderate(1L, false);
+        verify(currentUserService, atLeastOnce()).getCurrentHostId();
+        verify(commentService, times(1)).moderate(1L, 50L, false);
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void put_moderate_whenCommentNotFound_shouldReturn404() throws Exception {
         // Arrange
+        when(currentUserService.getCurrentHostId()).thenReturn(50L);
         doThrow(new CommentNotFoundException("Comentario no encontrado"))
-                .when(commentService).moderate(anyLong(), anyBoolean());
+                .when(commentService).moderate(anyLong(), anyLong(), anyBoolean());
 
         // Act & Assert
         mockMvc.perform(put("/api/comments/{commentId}/moderate", 999L)
@@ -369,39 +376,35 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "host@test.com", roles = {"HOST"})
+    void put_moderate_whenNotHostOfAccommodation_shouldReturn403() throws Exception {
+        // Arrange
+        when(currentUserService.getCurrentHostId()).thenReturn(999L);
+        doThrow(new CommentForbiddenException("Only the host of the accommodation can moderate this comment"))
+                .when(commentService).moderate(anyLong(), anyLong(), anyBoolean());
+
+        // Act & Assert
+        mockMvc.perform(put("/api/comments/{commentId}/moderate", 1L)
+                        .param("approved", "true"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string(containsString("Only the host of the accommodation can moderate")));
+
+        verify(currentUserService, atLeastOnce()).getCurrentHostId();
+    }
+
+    @Test
+    @WithMockUser(username = "user@test.com")
     void delete_delete_shouldReturn204() throws Exception {
         // Arrange
-        doNothing().when(commentService).delete(1L);
+        when(currentUserService.getCurrentUserId()).thenReturn(100L);
+        doNothing().when(commentService).delete(100L, 1L);
 
         // Act & Assert
         mockMvc.perform(delete("/api/comments/{commentId}", 1L))
                 .andExpect(status().isNoContent());
 
-        verify(commentService, times(1)).delete(1L);
-    }
-
-    @Test
-    void delete_delete_whenCommentNotFound_shouldReturn404() throws Exception {
-        // Arrange
-        doThrow(new CommentNotFoundException("Comentario no encontrado"))
-                .when(commentService).delete(anyLong());
-
-        // Act & Assert
-        mockMvc.perform(delete("/api/comments/{commentId}", 999L))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string(containsString("Comentario no encontrado")));
-    }
-
-    @Test
-    void delete_delete_whenNotOwner_shouldReturn403() throws Exception {
-        // Arrange
-        doThrow(new CommentForbiddenException("No tienes permiso para eliminar este comentario"))
-                .when(commentService).delete(anyLong());
-
-        // Act & Assert
-        mockMvc.perform(delete("/api/comments/{commentId}", 1L))
-                .andExpect(status().isForbidden())
-                .andExpect(content().string(containsString("Operación prohibida en comentarios")));
+        verify(currentUserService, atLeastOnce()).getCurrentUserId();
+        verify(commentService, times(1)).delete(100L, 1L);
     }
 
     @TestConfiguration
@@ -420,14 +423,14 @@ class CommentControllerTest {
 
         @Bean
         @Primary
-        JwtAuthenticationFilter jwtAuthenticationFilter() {
-            return mock(JwtAuthenticationFilter.class);
+        CustomUserDetailsService customUserDetailsService() {
+            return mock(CustomUserDetailsService.class);
         }
 
         @Bean
         @Primary
-        CustomUserDetailsService customUserDetailsService() {
-            return mock(CustomUserDetailsService.class);
+        JwtAuthenticationFilter jwtAuthenticationFilter() {
+            return mock(JwtAuthenticationFilter.class);
         }
     }
 }

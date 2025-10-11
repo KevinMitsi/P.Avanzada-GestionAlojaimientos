@@ -40,7 +40,8 @@ public class AccommodationController {
     @PutMapping("/{accommodationId}")
     public ResponseEntity<AccommodationDTO> update(@PathVariable Long accommodationId,
                                    @RequestBody @Valid UpdateAccommodationDTO dto) {
-        AccommodationDTO result = accommodationService.update(accommodationId, dto);
+        Long userId = currentUserService.getCurrentUserId();
+        AccommodationDTO result = accommodationService.update(userId, accommodationId, dto);
         return ResponseEntity.ok(result);
     }
 
@@ -64,7 +65,8 @@ public class AccommodationController {
 
     @DeleteMapping("/{accommodationId}")
     public ResponseEntity<Void> delete(@PathVariable Long accommodationId) {
-        accommodationService.delete(accommodationId);
+        Long userId = currentUserService.getCurrentUserId();
+        accommodationService.delete(userId, accommodationId);
         return ResponseEntity.noContent().build();
     }
 
@@ -80,19 +82,18 @@ public class AccommodationController {
     public ResponseEntity<List<String>> uploadImages(@PathVariable Long accommodationId,
                                      @RequestParam("images") List<MultipartFile> imageFiles,
                                      @RequestParam(defaultValue = "false") boolean primary) throws UploadingStorageException {
+        Long userId = currentUserService.getCurrentUserId();
         List<String> uploadedUrls = ((AccommodationServiceImpl) accommodationService)
-                    .uploadAndAddImages(accommodationId, imageFiles, primary);
+                    .uploadAndAddImages(userId, accommodationId, imageFiles, primary);
         return ResponseEntity.ok(uploadedUrls);
-
     }
 
     @DeleteMapping("/{accommodationId}/images/{imageId}")
     public ResponseEntity<Void> deleteImageFromCloudinary(@PathVariable Long accommodationId,
                                            @PathVariable Long imageId) throws DeletingStorageException {
-
-        ((AccommodationServiceImpl) accommodationService).deleteImageFromCloudinary(accommodationId, imageId);
+        Long userId = currentUserService.getCurrentUserId();
+        ((AccommodationServiceImpl) accommodationService).deleteImageFromCloudinary(userId, accommodationId, imageId);
         return ResponseEntity.noContent().build();
-       
     }
 
     @GetMapping("/{accommodationId}/metrics")
