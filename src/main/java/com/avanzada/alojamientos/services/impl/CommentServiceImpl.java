@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 
 @Service
@@ -192,7 +193,6 @@ public class CommentServiceImpl implements CommentService {
         if (!comment.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("User is not authorized to delete this comment");
         }
-
         commentRepository.deleteComment(commentId);
         log.info("Comment with ID: {} deleted successfully by user ID: {}", commentId, userId);
     }
