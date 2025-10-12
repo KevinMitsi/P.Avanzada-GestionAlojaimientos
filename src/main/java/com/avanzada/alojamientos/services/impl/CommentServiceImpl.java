@@ -7,10 +7,7 @@ import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.CommentEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
-import com.avanzada.alojamientos.exceptions.AccommodationNotFoundException;
-import com.avanzada.alojamientos.exceptions.CommentForbiddenException;
-import com.avanzada.alojamientos.exceptions.CommentNotFoundException;
-import com.avanzada.alojamientos.exceptions.UserNotFoundException;
+import com.avanzada.alojamientos.exceptions.*;
 import com.avanzada.alojamientos.mappers.CommentMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.repositories.CommentRepository;
@@ -26,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 
 @Service
@@ -175,13 +173,13 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public void delete(Long commentId) {
+    public void delete(Long userId, Long commentId) {
         log.info("Deleting comment with ID: {}", commentId);
 
-        if (!commentRepository.existsById(commentId)) {
-            throw new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE + commentId);
+        CommentEntity comment= commentRepository.findById(commentId).orElseThrow(() -> new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE + commentId));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("User cannot delete a comment he hasn't written");
         }
-
         commentRepository.deleteComment(commentId);
         log.info("Comment with ID: {} deleted successfully", commentId);
         }

@@ -21,6 +21,6 @@ public interface CommentService {
     // Moderación (admin)
     void moderate(Long commentId, boolean approved);
 
-    void delete(Long commentId);
+    void delete(Long userId, Long commentId);
 }
 
