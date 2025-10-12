@@ -8,6 +8,7 @@ import com.avanzada.alojamientos.entities.NotificationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.exceptions.NotificationNotFoundException;
+import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.mappers.NotificationMapper;
 import com.avanzada.alojamientos.repositories.NotificationRepository;
 import com.avanzada.alojamientos.repositories.UserRepository;
@@ -108,16 +109,21 @@ public class NotificationServiceImpl implements EmailNotificationService {
     }
 
     @Override
-    public void markAsRead(Long notificationId) {
-        log.info("Marking notification as read: {}", notificationId);
+    public void markAsRead(Long userId, Long notificationId) {
+        log.info("Marking notification as read: {} by user: {}", notificationId, userId);
 
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException("Notificación no encontrada con ID: " + notificationId));
 
+        // Validar que el usuario es el dueño de la notificación
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("User is not authorized to mark this notification as read");
+        }
+
         notification.setRead(true);
         notificationRepository.save(notification);
 
-        log.info("Notification {} marked as read successfully", notificationId);
+        log.info("Notification {} marked as read successfully by user {}", notificationId, userId);
     }
 
     @Override

@@ -28,6 +28,7 @@ public class UserEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -36,7 +37,7 @@ public class UserEntity {
     private String password;
 
     // Teléfono con regex SQL
-    @Column(name = "phone", nullable = false)
+    @Column(unique = true, nullable = false)
     private String phone;
 
     // Fecha de nacimiento debe ser pasada → CHECK en DB

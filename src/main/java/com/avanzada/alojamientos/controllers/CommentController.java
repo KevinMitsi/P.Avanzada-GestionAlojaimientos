@@ -56,13 +56,15 @@ public class CommentController {
     @PutMapping("/{commentId}/moderate")
     public ResponseEntity<String> moderate(@PathVariable Long commentId,
                          @RequestParam Boolean approved) {
-        commentService.moderate(commentId, approved);
+        Long hostId = currentUserService.getCurrentHostId();
+        commentService.moderate(commentId, hostId, approved);
         return ResponseEntity.ok("Comment moderated successfully");
     }
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> delete(@PathVariable Long commentId) {
-        commentService.delete(currentUserService.getCurrentUserId(),commentId);
+        Long userId = currentUserService.getCurrentUserId();
+        commentService.delete(userId, commentId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -7,7 +7,11 @@ import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.CommentEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
-import com.avanzada.alojamientos.exceptions.*;
+import com.avanzada.alojamientos.exceptions.AccommodationNotFoundException;
+import com.avanzada.alojamientos.exceptions.CommentForbiddenException;
+import com.avanzada.alojamientos.exceptions.CommentNotFoundException;
+import com.avanzada.alojamientos.exceptions.UnauthorizedException;
+import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.mappers.CommentMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.repositories.CommentRepository;
@@ -155,11 +159,17 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public void moderate(Long commentId, boolean approved) {
-        log.info("Moderating comment ID: {}. Approved: {}", commentId, approved);
+    public void moderate(Long commentId, Long hostId, boolean approved) {
+        log.info("Moderating comment ID: {} by host ID: {}. Approved: {}", commentId, hostId, approved);
 
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE + commentId));
+
+        // Verify host owns the accommodation
+        AccommodationEntity accommodation = comment.getAccommodation();
+        if (!accommodation.getHost().getId().equals(hostId)) {
+            throw new CommentForbiddenException("Only the host of the accommodation can moderate this comment");
+        }
 
         comment.setIsModerated(true);
 
@@ -174,13 +184,16 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void delete(Long userId, Long commentId) {
-        log.info("Deleting comment with ID: {}", commentId);
+        log.info("Deleting comment with ID: {} by user ID: {}", commentId, userId);
 
-        CommentEntity comment= commentRepository.findById(commentId).orElseThrow(() -> new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE + commentId));
+        CommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(COMMENT_NOT_FOUND_MESSAGE + commentId));
+
+        // Validate that the user is the owner of the comment
         if (!comment.getUser().getId().equals(userId)) {
-            throw new UnauthorizedException("User cannot delete a comment he hasn't written");
+            throw new UnauthorizedException("User is not authorized to delete this comment");
         }
         commentRepository.deleteComment(commentId);
-        log.info("Comment with ID: {} deleted successfully", commentId);
-        }
+        log.info("Comment with ID: {} deleted successfully by user ID: {}", commentId, userId);
+    }
 }

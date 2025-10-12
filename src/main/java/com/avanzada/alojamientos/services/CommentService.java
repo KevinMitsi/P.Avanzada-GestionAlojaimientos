@@ -18,9 +18,8 @@ public interface CommentService {
     // Host responde comentario
     void reply(Long commentId, Long hostId, String replyText);
 
-    // Moderación (admin)
-    void moderate(Long commentId, boolean approved);
+    // Moderación por el host del alojamiento
+    void moderate(Long commentId, Long hostId, boolean approved);
 
     void delete(Long userId, Long commentId);
 }
-

@@ -12,6 +12,7 @@ import com.avanzada.alojamientos.entities.NotificationEntity;
 import com.avanzada.alojamientos.entities.UserEntity;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.exceptions.NotificationNotFoundException;
+import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.mappers.NotificationMapper;
 import com.avanzada.alojamientos.repositories.NotificationRepository;
 import com.avanzada.alojamientos.repositories.UserRepository;
@@ -244,11 +245,12 @@ class NotificationServiceImplTest {
     @Test
     void markAsRead_ShouldUpdateNotification_WhenNotificationExists() {
         // Arrange
+        Long userId = 1L;
         when(notificationRepository.findById(1L)).thenReturn(Optional.of(testNotification));
         when(notificationRepository.save(testNotification)).thenReturn(testNotification);
 
         // Act
-        notificationService.markAsRead(1L);
+        notificationService.markAsRead(userId, 1L);
 
         // Assert
         assertTrue(testNotification.getRead());
@@ -259,15 +261,32 @@ class NotificationServiceImplTest {
     @Test
     void markAsRead_ShouldThrowNotificationNotFoundException_WhenNotificationNotExists() {
         // Arrange
+        Long userId = 1L;
         when(notificationRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
         NotificationNotFoundException exception = assertThrows(NotificationNotFoundException.class,
-            () -> notificationService.markAsRead(1L));
+            () -> notificationService.markAsRead(userId, 1L));
 
         assertEquals("Notificación no encontrada con ID: 1", exception.getMessage());
         verify(notificationRepository).findById(1L);
         verify(notificationRepository, never()).save(any());
+    }
+
+    @Test
+    void markAsRead_ShouldThrowUnauthorizedException_WhenUserNotOwner() {
+        // Arrange
+        Long wrongUserId = 999L; // Usuario diferente al dueño
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(testNotification));
+
+        // Act & Assert
+        UnauthorizedException exception = assertThrows(UnauthorizedException.class,
+            () -> notificationService.markAsRead(wrongUserId, 1L));
+
+        assertEquals("User is not authorized to mark this notification as read", exception.getMessage());
+        verify(notificationRepository).findById(1L);
+        verify(notificationRepository, never()).save(any());
+        assertFalse(testNotification.getRead()); // La notificación no debe ser marcada como leída
     }
 
     @Test
