@@ -20,6 +20,12 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
     Boolean existsByIdAndSoftDeletedFalse(Long id);
 
     /**
+     * Busca un alojamiento no eliminado (soft deleted = false) por ID
+     */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
+    Optional<AccommodationEntity> findByIdAndSoftDeletedFalse(Long id);
+
+    /**
      * Busca un alojamiento por ID cargando eagerly las imágenes para evitar LazyInitializationException
      */
     @EntityGraph(attributePaths = {"images", "host", "city", "services"})

@@ -224,14 +224,13 @@ public class AccommodationServiceImpl implements AccommodationService {
             throw new DeletingStorageException("imageId is required");
         }
 
-        // Verificar que el accommodation existe
-        if (Boolean.FALSE.equals(accommodationRepository.existsByIdAndSoftDeletedFalse(accommodationId))) {
-            throw new DeletingStorageException("Accommodation not found with ID: " + accommodationId);
-        }
+        // Buscar el alojamiento directamente (sin verificación duplicada)
+        AccommodationEntity accommodation = accommodationRepository.findByIdAndSoftDeletedFalse(accommodationId)
+                .orElseThrow(() -> new DeletingStorageException("Accommodation not found with ID: " + accommodationId));
 
-        AccommodationEntity accommodation = findAccommodationEntity(accommodationId);
         validateOwnership(accommodation, userId);
 
+        // Buscar la imagen
         ImageEntity image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new DeletingStorageException("Image not found with ID: " + imageId));
 
@@ -239,17 +238,24 @@ public class AccommodationServiceImpl implements AccommodationService {
             throw new DeletingStorageException("Image does not belong to the specified accommodation");
         }
 
-        try {
-            if (image.getCloudinaryPublicId() != null) {
-                storageService.delete(image.getCloudinaryPublicId());
+        String cloudinaryPublicId = image.getCloudinaryPublicId();
+
+        // PRIMERO: Eliminar de la base de datos
+        imageRepository.deleteById(image.getId());
+        imageRepository.flush(); // Forzar la eliminación inmediata en la BD
+
+        log.info("Successfully deleted image with ID {} from database for accommodation {}", imageId, accommodationId);
+
+        // SEGUNDO: Intentar eliminar de Cloudinary (si falla, la BD ya está actualizada)
+        if (cloudinaryPublicId != null) {
+            try {
+                storageService.delete(cloudinaryPublicId);
+                log.info("Successfully deleted image from Cloudinary with public ID: {}", cloudinaryPublicId);
+            } catch (DeletingStorageException e) {
+                log.warn("Image deleted from database but failed to delete from Cloudinary. Public ID: {}. Error: {}",
+                        cloudinaryPublicId, e.getMessage());
+                // No lanzamos la excepción porque la imagen ya fue eliminada de la BD
             }
-            imageRepository.delete(image);
-
-            log.info("Successfully deleted image with ID {} from accommodation {}", imageId, accommodationId);
-
-        } catch (DeletingStorageException e) {
-            log.error("Error deleting image from Cloudinary: {}", e.getMessage());
-            throw e;
         }
     }
 
