@@ -145,13 +145,14 @@ class AccommodationServiceImplTest {
     @Test
     void update_Success() {
         // Arrange
+        Long userId = 1L;
         when(accommodationRepository.existsById(1L)).thenReturn(true);
         when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.save(testAccommodationEntity)).thenReturn(testAccommodationEntity);
         when(accommodationMapper.toAccommodationDTO(testAccommodationEntity)).thenReturn(accommodationDTO);
 
         // Act
-        AccommodationDTO result = accommodationService.update(1L, updateAccommodationDTO);
+        AccommodationDTO result = accommodationService.update(userId, 1L, updateAccommodationDTO);
 
         // Assert
         assertNotNull(result);
@@ -163,7 +164,7 @@ class AccommodationServiceImplTest {
     void update_WithNullId_ThrowsIllegalArgumentException() {
         // Act & Assert
         assertThrows(IllegalArgumentException.class,
-                () -> accommodationService.update(null, updateAccommodationDTO));
+                () -> accommodationService.update(1L, null, updateAccommodationDTO));
     }
 
     @Test
@@ -173,7 +174,7 @@ class AccommodationServiceImplTest {
 
         // Act & Assert
         assertThrows(NoSuchElementException.class,
-                () -> accommodationService.update(1L, updateAccommodationDTO));
+                () -> accommodationService.update(1L, 1L, updateAccommodationDTO));
     }
 
     @Test
@@ -185,7 +186,19 @@ class AccommodationServiceImplTest {
 
         // Act & Assert
         assertThrows(IllegalStateException.class,
-                () -> accommodationService.update(1L, updateAccommodationDTO));
+                () -> accommodationService.update(1L, 1L, updateAccommodationDTO));
+    }
+
+    @Test
+    void update_NotOwner_ThrowsSecurityException() {
+        // Arrange
+        Long wrongUserId = 999L;
+        when(accommodationRepository.existsById(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
+
+        // Act & Assert
+        assertThrows(UnauthorizedException.class,
+                () -> accommodationService.update(wrongUserId, 1L, updateAccommodationDTO));
     }
 
     // FIND BY ID TESTS
@@ -318,7 +331,8 @@ class AccommodationServiceImplTest {
         AccommodationSearch criteria = new AccommodationSearch(1L, null, null, 2, null, null, List.of("WiFi"));
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(accommodationRepository.findAccommodationIdsWithServices(any(), any(), any(), any(), any(), any(), any(), anyInt(), any()))
+        when(accommodationRepository.findAccommodationIdsWithServices(
+                eq(1L), isNull(), isNull(), eq(2), isNull(), isNull(), eq(List.of("WiFi")), eq(1L), eq(pageable)))
                 .thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
@@ -330,14 +344,15 @@ class AccommodationServiceImplTest {
     @Test
     void delete_Success() {
         // Arrange
+        Long userId = 1L;
         LocalDate today = LocalDate.now();
         when(accommodationRepository.existsById(1L)).thenReturn(true);
-        when(accommodationRepository.countFutureNonCancelledReservations(1L, today)).thenReturn(0L);
         when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
+        when(accommodationRepository.countFutureNonCancelledReservations(1L, today)).thenReturn(0L);
         when(accommodationRepository.save(testAccommodationEntity)).thenReturn(testAccommodationEntity);
 
         // Act
-        accommodationService.delete(1L);
+        accommodationService.delete(userId, 1L);
 
         // Assert
         verify(accommodationRepository).save(testAccommodationEntity);
@@ -349,7 +364,7 @@ class AccommodationServiceImplTest {
     @Test
     void delete_WithNullId_DoesNothing() {
         // Act
-        accommodationService.delete(null);
+        accommodationService.delete(1L, null);
 
         // Assert
         verify(accommodationRepository, never()).save(any());
@@ -361,39 +376,55 @@ class AccommodationServiceImplTest {
         when(accommodationRepository.existsById(1L)).thenReturn(false);
 
         // Act
-        accommodationService.delete(1L);
+        accommodationService.delete(1L, 1L);
 
         // Assert
         verify(accommodationRepository, never()).save(any());
     }
 
     @Test
+    void delete_NotOwner_ThrowsSecurityException() {
+        // Arrange
+        Long wrongUserId = 999L;
+        when(accommodationRepository.existsById(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
+
+        // Act & Assert
+        assertThrows(UnauthorizedException.class,
+                () -> accommodationService.delete(wrongUserId, 1L));
+    }
+
+    @Test
     void delete_WithFutureReservations_ThrowsIllegalStateException() {
         // Arrange
+        Long userId = 1L;
         LocalDate today = LocalDate.now();
         when(accommodationRepository.existsById(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.countFutureNonCancelledReservations(1L, today)).thenReturn(1L);
 
         // Act & Assert
-        assertThrows(IllegalStateException.class, () -> accommodationService.delete(1L));
+        assertThrows(IllegalStateException.class, () -> accommodationService.delete(userId, 1L));
     }
 
     @Test
     void delete_FallbackValidation_WithFutureReservations_ThrowsIllegalStateException() {
         // Arrange
+        Long userId = 1L;
         LocalDate today = LocalDate.now();
         ReservationEntity futureReservation = new ReservationEntity();
         futureReservation.setStartDate(LocalDate.now().plusDays(10));
         testAccommodationEntity.setReservations(List.of(futureReservation));
 
         when(accommodationRepository.existsById(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.countFutureNonCancelledReservations(1L, today))
                 .thenThrow(new RuntimeException("Method not available"));
-        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
 
         // Act & Assert
-        assertThrows(IllegalStateException.class, () -> accommodationService.delete(1L));
+        assertThrows(IllegalStateException.class, () -> accommodationService.delete(userId, 1L));
     }
+
 
     // FIND BY HOST TESTS
     @Test
@@ -520,7 +551,7 @@ class AccommodationServiceImplTest {
         when(accommodationRepository.save(testAccommodationEntity)).thenReturn(testAccommodationEntity);
 
         // Act
-        List<String> result = accommodationService.uploadAndAddImages(1L, files, true);
+        List<String> result = accommodationService.uploadAndAddImages(1L, 1L, files, true);
 
         // Assert
         assertNotNull(result);
@@ -532,7 +563,7 @@ class AccommodationServiceImplTest {
     @Test
     void uploadAndAddImages_EmptyFileList_ReturnsEmptyList() throws UploadingStorageException {
         // Act
-        List<String> result = accommodationService.uploadAndAddImages(1L, Collections.emptyList(), false);
+        List<String> result = accommodationService.uploadAndAddImages(1L, 1L, Collections.emptyList(), false);
 
         // Assert
         assertTrue(result.isEmpty());
@@ -541,7 +572,7 @@ class AccommodationServiceImplTest {
     @Test
     void uploadAndAddImages_NullFileList_ReturnsEmptyList() throws UploadingStorageException {
         // Act
-        List<String> result = accommodationService.uploadAndAddImages(1L, null, false);
+        List<String> result = accommodationService.uploadAndAddImages(1L, 1L, null, false);
 
         // Assert
         assertTrue(result.isEmpty());
@@ -550,48 +581,47 @@ class AccommodationServiceImplTest {
     @Test
     void uploadAndAddImages_MaxImagesReached_ThrowsIllegalStateException() {
         // Arrange
-        List<ImageEntity> currentImages = new ArrayList<>();
+        List<ImageEntity> existingImages = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            currentImages.add(new ImageEntity());
+            existingImages.add(new ImageEntity());
         }
-        testAccommodationEntity.setImages(currentImages);
+        testAccommodationEntity.setImages(existingImages);
+
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
 
         MultipartFile mockFile = mock(MultipartFile.class);
         List<MultipartFile> files = List.of(mockFile);
 
-        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
-
         // Act & Assert
         assertThrows(IllegalStateException.class,
-                () -> accommodationService.uploadAndAddImages(1L, files, false));
+                () -> accommodationService.uploadAndAddImages(1L, 1L, files, false));
     }
 
     @Test
     void uploadAndAddImages_DeletedAccommodation_ThrowsIllegalStateException() {
         // Arrange
         testAccommodationEntity.setSoftDeleted(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
+
         MultipartFile mockFile = mock(MultipartFile.class);
         List<MultipartFile> files = List.of(mockFile);
 
-        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
-
         // Act & Assert
         assertThrows(IllegalStateException.class,
-                () -> accommodationService.uploadAndAddImages(1L, files, false));
+                () -> accommodationService.uploadAndAddImages(1L, 1L, files, false));
     }
 
     @Test
     void uploadAndAddImages_UploadFails_ThrowsUploadingStorageException() throws UploadingStorageException {
         // Arrange
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         MultipartFile mockFile = mock(MultipartFile.class);
         List<MultipartFile> files = List.of(mockFile);
-
-        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(storageService.upload(mockFile)).thenThrow(new UploadingStorageException("Upload failed"));
 
         // Act & Assert
         assertThrows(UploadingStorageException.class,
-                () -> accommodationService.uploadAndAddImages(1L, files, false));
+                () -> accommodationService.uploadAndAddImages(1L, 1L, files, false));
     }
 
     // IMAGE DELETE TESTS
@@ -604,10 +634,11 @@ class AccommodationServiceImplTest {
         image.setAccommodation(testAccommodationEntity);
 
         when(accommodationRepository.existsByIdAndSoftDeletedFalse(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(imageRepository.findById(1L)).thenReturn(Optional.of(image));
 
         // Act
-        accommodationService.deleteImageFromCloudinary(1L, 1L);
+        accommodationService.deleteImageFromCloudinary(1L, 1L, 1L);
 
         // Assert
         verify(storageService).delete("test_public_id");
@@ -618,7 +649,7 @@ class AccommodationServiceImplTest {
     void deleteImageFromCloudinary_NullImageId_ThrowsDeletingStorageException() {
         // Act & Assert
         assertThrows(DeletingStorageException.class,
-                () -> accommodationService.deleteImageFromCloudinary(1L, null));
+                () -> accommodationService.deleteImageFromCloudinary(1L, 1L, null));
     }
 
     @Test
@@ -628,18 +659,19 @@ class AccommodationServiceImplTest {
 
         // Act & Assert
         assertThrows(DeletingStorageException.class,
-                () -> accommodationService.deleteImageFromCloudinary(1L, 1L));
+                () -> accommodationService.deleteImageFromCloudinary(1L, 1L, 1L));
     }
 
     @Test
     void deleteImageFromCloudinary_ImageNotFound_ThrowsDeletingStorageException() {
         // Arrange
         when(accommodationRepository.existsByIdAndSoftDeletedFalse(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(imageRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(DeletingStorageException.class,
-                () -> accommodationService.deleteImageFromCloudinary(1L, 1L));
+                () -> accommodationService.deleteImageFromCloudinary(1L, 1L, 1L));
     }
 
     @Test
@@ -653,11 +685,12 @@ class AccommodationServiceImplTest {
         image.setAccommodation(otherAccommodation);
 
         when(accommodationRepository.existsByIdAndSoftDeletedFalse(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(imageRepository.findById(1L)).thenReturn(Optional.of(image));
 
         // Act & Assert
         assertThrows(DeletingStorageException.class,
-                () -> accommodationService.deleteImageFromCloudinary(1L, 1L));
+                () -> accommodationService.deleteImageFromCloudinary(1L, 1L, 1L));
     }
 
     @Test
@@ -669,12 +702,13 @@ class AccommodationServiceImplTest {
         image.setAccommodation(testAccommodationEntity);
 
         when(accommodationRepository.existsByIdAndSoftDeletedFalse(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(imageRepository.findById(1L)).thenReturn(Optional.of(image));
         doThrow(new DeletingStorageException("Delete failed")).when(storageService).delete("test_public_id");
 
         // Act & Assert
         assertThrows(DeletingStorageException.class,
-                () -> accommodationService.deleteImageFromCloudinary(1L, 1L));
+                () -> accommodationService.deleteImageFromCloudinary(1L, 1L, 1L));
     }
 
     @Test
@@ -686,10 +720,11 @@ class AccommodationServiceImplTest {
         image.setAccommodation(testAccommodationEntity);
 
         when(accommodationRepository.existsByIdAndSoftDeletedFalse(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(imageRepository.findById(1L)).thenReturn(Optional.of(image));
 
         // Act
-        accommodationService.deleteImageFromCloudinary(1L, 1L);
+        accommodationService.deleteImageFromCloudinary(1L, 1L, 1L);
 
         // Assert
         verify(storageService, never()).delete(any());
@@ -791,7 +826,7 @@ class AccommodationServiceImplTest {
         when(accommodationRepository.save(testAccommodationEntity)).thenReturn(testAccommodationEntity);
 
         // Act
-        List<String> result = accommodationService.uploadAndAddImages(1L, files, true);
+        List<String> result = accommodationService.uploadAndAddImages(1L, 1L, files, true);
 
         // Assert
         assertNotNull(result);
@@ -809,7 +844,7 @@ class AccommodationServiceImplTest {
 
         // Act & Assert
         assertThrows(NoSuchElementException.class,
-                () -> accommodationService.uploadAndAddImages(1L, files, false));
+                () -> accommodationService.uploadAndAddImages(1L, 1L, files, false));
     }
 
     @Test
@@ -918,17 +953,18 @@ class AccommodationServiceImplTest {
     @Test
     void delete_FallbackValidation_WithNullReservations_Success() {
         // Arrange
+        Long userId = 1L;
         testAccommodationEntity.setReservations(null);
         LocalDate today = LocalDate.now();
 
         when(accommodationRepository.existsById(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.countFutureNonCancelledReservations(1L, today))
                 .thenThrow(new RuntimeException("Method not available"));
-        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.save(testAccommodationEntity)).thenReturn(testAccommodationEntity);
 
         // Act
-        accommodationService.delete(1L);
+        accommodationService.delete(userId, 1L);
 
         // Assert
         verify(accommodationRepository).save(testAccommodationEntity);
@@ -938,17 +974,18 @@ class AccommodationServiceImplTest {
     @Test
     void delete_FallbackValidation_WithEmptyReservations_Success() {
         // Arrange
+        Long userId = 1L;
         testAccommodationEntity.setReservations(Collections.emptyList());
         LocalDate today = LocalDate.now();
 
         when(accommodationRepository.existsById(1L)).thenReturn(true);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.countFutureNonCancelledReservations(1L, today))
                 .thenThrow(new RuntimeException("Method not available"));
-        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(testAccommodationEntity));
         when(accommodationRepository.save(testAccommodationEntity)).thenReturn(testAccommodationEntity);
 
         // Act
-        accommodationService.delete(1L);
+        accommodationService.delete(userId, 1L);
 
         // Assert
         verify(accommodationRepository).save(testAccommodationEntity);

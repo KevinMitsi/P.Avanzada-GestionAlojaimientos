@@ -8,6 +8,7 @@ import com.avanzada.alojamientos.entities.*;
 import com.avanzada.alojamientos.exceptions.AccommodationNotFoundException;
 import com.avanzada.alojamientos.exceptions.CommentForbiddenException;
 import com.avanzada.alojamientos.exceptions.CommentNotFoundException;
+import com.avanzada.alojamientos.exceptions.UnauthorizedException;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.mappers.CommentMapper;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
@@ -546,13 +547,14 @@ class CommentServiceImplTest {
     void moderate_ApproveComment_Success() {
         // Arrange
         Long commentId = 1L;
+        Long hostId = 2L;
         boolean approved = true;
 
         when(commentRepository.findById(commentId)).thenReturn(Optional.of(testComment));
         when(commentRepository.save(any(CommentEntity.class))).thenReturn(testComment);
 
         // Act
-        commentService.moderate(commentId, approved);
+        commentService.moderate(commentId, hostId, approved);
 
         // Assert
         verify(commentRepository).findById(commentId);
@@ -564,12 +566,13 @@ class CommentServiceImplTest {
     void moderate_RejectComment_DeletesComment() {
         // Arrange
         Long commentId = 1L;
+        Long hostId = 2L;
         boolean approved = false;
 
         when(commentRepository.findById(commentId)).thenReturn(Optional.of(testComment));
 
         // Act
-        commentService.moderate(commentId, approved);
+        commentService.moderate(commentId, hostId, approved);
 
         // Assert
         verify(commentRepository).findById(commentId);
@@ -580,6 +583,7 @@ class CommentServiceImplTest {
     void moderate_CommentNotFound_ThrowsCommentNotFoundException() {
         // Arrange
         Long commentId = 1L;
+        Long hostId = 2L;
         boolean approved = true;
 
         when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
@@ -587,10 +591,31 @@ class CommentServiceImplTest {
         // Act & Assert
         CommentNotFoundException exception = assertThrows(
                 CommentNotFoundException.class,
-                () -> commentService.moderate(commentId, approved)
+                () -> commentService.moderate(commentId, hostId, approved)
         );
 
         assertTrue(exception.getMessage().contains("Comment not found"));
+        verify(commentRepository).findById(commentId);
+        verify(commentRepository, never()).save(any());
+        verify(commentRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void moderate_HostDoesNotOwnAccommodation_ThrowsCommentForbiddenException() {
+        // Arrange
+        Long commentId = 1L;
+        Long wrongHostId = 999L; // Different host
+        boolean approved = true;
+
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(testComment));
+
+        // Act & Assert
+        CommentForbiddenException exception = assertThrows(
+                CommentForbiddenException.class,
+                () -> commentService.moderate(commentId, wrongHostId, approved)
+        );
+
+        assertTrue(exception.getMessage().contains("Only the host of the accommodation can moderate"));
         verify(commentRepository).findById(commentId);
         verify(commentRepository, never()).save(any());
         verify(commentRepository, never()).deleteById(any());
@@ -600,33 +625,54 @@ class CommentServiceImplTest {
     @Test
     void delete_Success() {
         // Arrange
+        Long userId = 1L;
         Long commentId = 1L;
 
-        when(commentRepository.existsById(commentId)).thenReturn(true);
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(testComment));
 
         // Act
-        commentService.delete(commentId);
+        commentService.delete(userId, commentId);
 
         // Assert
-        verify(commentRepository).existsById(commentId);
+        verify(commentRepository).findById(commentId);
         verify(commentRepository).deleteComment(commentId);
     }
 
     @Test
     void delete_CommentNotFound_ThrowsCommentNotFoundException() {
         // Arrange
+        Long userId = 1L;
         Long commentId = 1L;
 
-        when(commentRepository.existsById(commentId)).thenReturn(false);
+        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
 
         // Act & Assert
         CommentNotFoundException exception = assertThrows(
                 CommentNotFoundException.class,
-                () -> commentService.delete(commentId)
+                () -> commentService.delete(userId, commentId)
         );
 
         assertTrue(exception.getMessage().contains("Comment not found"));
-        verify(commentRepository).existsById(commentId);
+        verify(commentRepository).findById(commentId);
+        verify(commentRepository, never()).deleteComment(any());
+    }
+
+    @Test
+    void delete_UserNotOwner_ThrowsUnauthorizedException() {
+        // Arrange
+        Long wrongUserId = 999L; // Different user, not the owner
+        Long commentId = 1L;
+
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(testComment));
+
+        // Act & Assert
+        UnauthorizedException exception = assertThrows(
+                UnauthorizedException.class,
+                () -> commentService.delete(wrongUserId, commentId)
+        );
+
+        assertTrue(exception.getMessage().contains("User is not authorized to delete this comment"));
+        verify(commentRepository).findById(commentId);
         verify(commentRepository, never()).deleteComment(any());
     }
 

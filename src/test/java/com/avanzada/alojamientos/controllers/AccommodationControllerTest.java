@@ -87,7 +87,7 @@ class AccommodationControllerTest {
                 .andExpect(content().string(containsString("Error de validación")))
         ;
 
-        verify(accommodationService, never()).update(anyLong(), any(UpdateAccommodationDTO.class));
+        verify(accommodationService, never()).update(anyLong(), anyLong(), any(UpdateAccommodationDTO.class));
     }
 
     @Test
@@ -107,8 +107,9 @@ class AccommodationControllerTest {
             }
             """;
 
-        when(accommodationService.update(anyLong(), any(UpdateAccommodationDTO.class)))
-                .thenReturn( null); // no necesitamos body
+        when(currentUserService.getCurrentUserId()).thenReturn(1L);
+        when(accommodationService.update(eq(1L), eq(1L), any(UpdateAccommodationDTO.class)))
+                .thenReturn(null); // no necesitamos body
 
         // Act & Assert
         mockMvc.perform(
@@ -117,6 +118,9 @@ class AccommodationControllerTest {
                                 .content(validJson)
                 )
                 .andExpect(status().isOk());
+
+        verify(currentUserService).getCurrentUserId();
+        verify(accommodationService).update(eq(1L), eq(1L), any(UpdateAccommodationDTO.class));
     }
 
     @Test
@@ -263,12 +267,14 @@ class AccommodationControllerTest {
     @Test
     @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void delete_delete_shouldReturn204_andCallService() throws Exception {
-        doNothing().when(accommodationService).delete(9L);
+        when(currentUserService.getCurrentUserId()).thenReturn(5L);
+        doNothing().when(accommodationService).delete(5L, 9L);
 
         mockMvc.perform(delete("/api/accommodations/{id}", 9L))
                 .andExpect(status().isNoContent());
 
-        verify(accommodationService).delete(9L);
+        verify(currentUserService).getCurrentUserId();
+        verify(accommodationService).delete(5L, 9L);
     }
 
     @Test
@@ -302,7 +308,8 @@ class AccommodationControllerTest {
     void post_uploadImages_shouldReturn200_andCallServiceImpl() throws Exception {
         // Asegurar que el bean es un mock de la implementación concreta para que el cast en el controller funcione
         AccommodationServiceImpl serviceImplMock = (AccommodationServiceImpl) accommodationService;
-        when(serviceImplMock.uploadAndAddImages(eq(11L), anyList(), eq(true)))
+        when(currentUserService.getCurrentUserId()).thenReturn(100L);
+        when(serviceImplMock.uploadAndAddImages(eq(100L), eq(11L), anyList(), eq(true)))
                 .thenReturn(List.of("http://cdn/x1.jpg", "http://cdn/x2.jpg"));
 
         MockMultipartFile file1 = new MockMultipartFile("images", "a.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[]{1,2});
@@ -315,19 +322,22 @@ class AccommodationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("x1.jpg")));
 
-        verify(serviceImplMock).uploadAndAddImages(eq(11L), anyList(), eq(true));
+        verify(currentUserService).getCurrentUserId();
+        verify(serviceImplMock).uploadAndAddImages(eq(100L), eq(11L), anyList(), eq(true));
     }
 
     @Test
     @WithMockUser(username = "host@test.com", roles = {"HOST"})
     void delete_deleteImage_shouldReturn204_andCallServiceImpl() throws Exception {
         AccommodationServiceImpl serviceImplMock = (AccommodationServiceImpl) accommodationService;
-        doNothing().when(serviceImplMock).deleteImageFromCloudinary(12L, 99L);
+        when(currentUserService.getCurrentUserId()).thenReturn(100L);
+        doNothing().when(serviceImplMock).deleteImageFromCloudinary(100L, 12L, 99L);
 
         mockMvc.perform(delete("/api/accommodations/{accommodationId}/images/{imageId}", 12L, 99L))
                 .andExpect(status().isNoContent());
 
-        verify(serviceImplMock).deleteImageFromCloudinary(12L, 99L);
+        verify(currentUserService).getCurrentUserId();
+        verify(serviceImplMock).deleteImageFromCloudinary(100L, 12L, 99L);
     }
 
     @Test
