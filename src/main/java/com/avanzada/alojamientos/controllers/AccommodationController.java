@@ -204,7 +204,7 @@ public class AccommodationController {
                     )
             )
     })
-    public ResponseEntity<Page<AccommodationDTO>> search(
+    public ResponseEntity<Page<AccommodationFoundDTO>> search(
             @Parameter(description = "ID de la ciudad", example = "1")
             @RequestParam(required = false) Long cityId,
             @Parameter(description = "Fecha de inicio (formato: YYYY-MM-DD)", example = "2025-01-15")
@@ -222,7 +222,7 @@ public class AccommodationController {
             @Parameter(description = "Parámetros de paginación (page, size, sort)", example = "page=0&size=10&sort=pricePerNight,asc")
             Pageable pageable) {
 
-        Page<AccommodationDTO> result = accommodationService.search(generateCriteria(cityId,
+        Page<AccommodationFoundDTO> result = accommodationService.search(generateCriteria(cityId,
                 startDate, endDate, guests, minPrice, maxPrice, services), pageable);
         return ResponseEntity.ok(result);
     }

@@ -11,7 +11,7 @@ public interface AccommodationService {
     CreateAccommodationResponseDTO create(CreateAccommodationDTO dto, Long hostId);
     AccommodationDTO update(Long userId, Long accommodationId, UpdateAccommodationDTO dto);
     Optional<AccommodationDTO> findById(Long accommodationId);
-    Page<AccommodationDTO> search(AccommodationSearch criteria, Pageable pageable);
+    Page<AccommodationFoundDTO> search(AccommodationSearch criteria, Pageable pageable);
     void delete(Long userId, Long accommodationId);
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
     AccommodationMetrics getMetrics(Long accommodationId, LocalDate start, LocalDate end);
