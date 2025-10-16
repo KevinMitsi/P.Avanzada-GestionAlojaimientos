@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 
 public interface CommentRepository extends JpaRepository<CommentEntity, Long> {
@@ -17,4 +18,10 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Long> {
     @Modifying
     @Query("DELETE FROM CommentEntity c WHERE c.id = ?1")
     void deleteComment(Long commentId);
+
+    /**
+     * Calcula el rating promedio de un alojamiento basado en sus comentarios
+     */
+    @Query("SELECT COALESCE(AVG(CAST(c.rating AS double)), 0.0) FROM CommentEntity c WHERE c.accommodation.id = :accommodationId")
+    Double findAverageRatingByAccommodationId(@Param("accommodationId") Long accommodationId);
 }

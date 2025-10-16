@@ -15,6 +15,7 @@ import com.avanzada.alojamientos.entities.UserEntity;
 import com.avanzada.alojamientos.exceptions.UploadingStorageException;
 import com.avanzada.alojamientos.exceptions.DeletingStorageException;
 import com.avanzada.alojamientos.repositories.ImageRepository;
+import com.avanzada.alojamientos.repositories.CommentRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     private final AccommodationMapper accommodationMapper;
     private final StorageService storageService;
     private final ImageRepository imageRepository;
+    private final CommentRepository commentRepository;
 
 
     @Override
@@ -92,12 +94,17 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
-    public Page<AccommodationDTO> search(AccommodationSearch criteria, Pageable pageable) {
+    public Page<AccommodationFoundDTO> search(AccommodationSearch criteria, Pageable pageable) {
         Page<AccommodationEntity> entityPage = performSearch(criteria, pageable);
 
-        List<AccommodationDTO> dtos = entityPage.stream()
+        List<AccommodationFoundDTO> dtos = entityPage.stream()
                 .filter(accommodation -> !Boolean.TRUE.equals(accommodation.getSoftDeleted()))
-                .map(accommodationMapper::toAccommodationDTO)
+                .map(accommodation -> {
+                    // Calcular el rating promedio usando el CommentRepository
+                    double avgRating = commentRepository.findAverageRatingByAccommodationId(accommodation.getId());
+                    // Pasar el avgRating como parámetro al mapper
+                    return accommodationMapper.toAccommodationFoundDTO(accommodation, avgRating);
+                })
                 .toList();
 
         return new PageImpl<>(dtos, pageable, entityPage.getTotalElements());
@@ -458,14 +465,8 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     private double calculateAverageRating(AccommodationEntity accommodation) {
-        if (accommodation.getComments() == null || accommodation.getComments().isEmpty()) {
-            return 0.0;
-        }
-
-        return accommodation.getComments().stream()
-                .mapToInt(comment -> comment.getRating() != null ? comment.getRating() : 0)
-                .average()
-                .orElse(0.0);
+        // Usar el CommentRepository para calcular el rating promedio directamente desde la BD
+        return commentRepository.findAverageRatingByAccommodationId(accommodation.getId());
     }
 
     private BigDecimal calculateTotalRevenue(List<ReservationEntity> reservations, LocalDate start, LocalDate end) {

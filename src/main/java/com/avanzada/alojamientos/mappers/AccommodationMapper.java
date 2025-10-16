@@ -3,10 +3,12 @@ package com.avanzada.alojamientos.mappers;
 
 import com.avanzada.alojamientos.DTO.accommodation.CreateAccommodationDTO;
 import com.avanzada.alojamientos.DTO.accommodation.AccommodationDTO;
+import com.avanzada.alojamientos.DTO.accommodation.AccommodationFoundDTO;
 import com.avanzada.alojamientos.DTO.accommodation.CreateAccommodationResponseDTO;
 import com.avanzada.alojamientos.DTO.accommodation.UpdateAccommodationDTO;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.CityEntity;
+import com.avanzada.alojamientos.entities.ImageEntity;
 import org.mapstruct.*;
 
 
@@ -24,6 +26,10 @@ public interface AccommodationMapper {
     @Mapping(source = "city", target = "city")
     @Mapping(source = "coordinates", target = "coordinates")
     CreateAccommodationResponseDTO toCreateAccommodationResponseDTO(AccommodationEntity accommodation);
+
+    @Mapping(target = "primaryImageUrl", expression = "java(extractPrimaryImageUrl(accommodation))")
+    @Mapping(target = "avgRating", source = "avgRating")
+    AccommodationFoundDTO toAccommodationFoundDTO(AccommodationEntity accommodation, Double avgRating);
 
 
 
@@ -66,6 +72,17 @@ public interface AccommodationMapper {
         CityEntity city = new CityEntity();
         city.setId(cityId);
         return city;
+    }
+
+    default String extractPrimaryImageUrl(AccommodationEntity accommodation) {
+        if (accommodation == null || accommodation.getImages() == null) {
+            return null;
+        }
+        return accommodation.getImages().stream()
+                .filter(image -> Boolean.TRUE.equals(image.getIsPrimary()))
+                .findFirst()
+                .map(ImageEntity::getUrl)
+                .orElse(null);
     }
 
 }
