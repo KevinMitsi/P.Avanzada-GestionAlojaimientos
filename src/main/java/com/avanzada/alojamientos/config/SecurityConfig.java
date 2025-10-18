@@ -89,6 +89,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/accommodations/*/images/**").hasRole(HOST_ROLE)
                         .requestMatchers(HttpMethod.PUT, "/api/comments/**").hasRole(HOST_ROLE)
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole(HOST_ROLE)
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/accommodations/host/**").hasRole(HOST_ROLE)
 
 
