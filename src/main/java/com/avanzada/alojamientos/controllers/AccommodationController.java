@@ -167,7 +167,7 @@ public class AccommodationController {
     @GetMapping("/search")
     @Operation(
             summary = "Buscar alojamientos",
-            description = "Busca alojamientos según criterios de búsqueda. Este endpoint es público y no requiere autenticación. Soporta paginación y filtros por ciudad, fechas, número de huéspedes, rango de precios y servicios."
+            description = "Busca alojamientos según criterios de búsqueda. Este endpoint es público y no requiere autenticación. Soporta paginación y filtros por nombre de ciudad (búsqueda parcial), fechas, número de huéspedes, rango de precios y servicios."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -205,8 +205,8 @@ public class AccommodationController {
             )
     })
     public ResponseEntity<Page<AccommodationFoundDTO>> search(
-            @Parameter(description = "ID de la ciudad", example = "1")
-            @RequestParam(required = false) Long cityId,
+            @Parameter(description = "Nombre de la ciudad (búsqueda parcial, no sensible a mayúsculas)", example = "Bogotá")
+            @RequestParam(required = false) String cityName,
             @Parameter(description = "Fecha de inicio (formato: YYYY-MM-DD)", example = "2025-01-15")
             @RequestParam(required = false) String startDate,
             @Parameter(description = "Fecha de fin (formato: YYYY-MM-DD)", example = "2025-01-20")
@@ -222,7 +222,7 @@ public class AccommodationController {
             @Parameter(description = "Parámetros de paginación (page, size, sort)", example = "page=0&size=10&sort=pricePerNight,asc")
             Pageable pageable) {
 
-        Page<AccommodationFoundDTO> result = accommodationService.search(generateCriteria(cityId,
+        Page<AccommodationFoundDTO> result = accommodationService.search(generateCriteria(cityName,
                 startDate, endDate, guests, minPrice, maxPrice, services), pageable);
         return ResponseEntity.ok(result);
     }
@@ -523,9 +523,53 @@ public class AccommodationController {
                     .orElse(ResponseEntity.notFound().build());
     }
 
-    private static AccommodationSearch generateCriteria(Long cityId, String startDate, String endDate, Integer guests, BigDecimal minPrice, BigDecimal maxPrice, List<String> services) {
+    @GetMapping("/services")
+    @Operation(
+            summary = "Obtener todos los servicios disponibles",
+            description = "Devuelve una lista con todos los servicios únicos que ofrecen los alojamientos. Endpoint público que no requiere autenticación. Útil para cargar opciones en filtros o checkboxes."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de servicios obtenida exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = List.class),
+                            examples = @ExampleObject(value = """
+                                    [
+                                        "Aire",
+                                        "Ascensor",
+                                        "Asador",
+                                        "BBQ",
+                                        "Balcón",
+                                        "Chimenea",
+                                        "Cocina",
+                                        "Coworking",
+                                        "Desayuno",
+                                        "Domótica",
+                                        "Gimnasio",
+                                        "Jacuzzi",
+                                        "Lavadora",
+                                        "Parqueadero",
+                                        "Patio",
+                                        "Piscina",
+                                        "Playa",
+                                        "Terraza",
+                                        "VistaMar",
+                                        "WiFi"
+                                    ]
+                                    """)
+                    )
+            )
+    })
+    public ResponseEntity<List<String>> getAllServices() {
+        List<String> services = accommodationService.getAllServices();
+        return ResponseEntity.ok(services);
+    }
+
+    private static AccommodationSearch generateCriteria(String cityName, String startDate, String endDate, Integer guests, BigDecimal minPrice, BigDecimal maxPrice, List<String> services) {
         return new AccommodationSearch(
-                cityId,
+                cityName,
                 startDate != null ? LocalDate.parse(startDate) : null,
                 endDate != null ? LocalDate.parse(endDate) : null,
                 guests,

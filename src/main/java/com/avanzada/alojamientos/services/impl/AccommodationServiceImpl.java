@@ -172,6 +172,14 @@ public class AccommodationServiceImpl implements AccommodationService {
         return new AccommodationMetrics(totalReservations, averageRating, totalRevenue);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAllServices() {
+        log.debug("Fetching all unique services from accommodations");
+        List<String> services = accommodationRepository.findAllUniqueServices();
+        log.debug("Found {} unique services", services.size());
+        return services;
+    }
 
     @Transactional
     public List<String> uploadAndAddImages(Long userId, Long accommodationId, List<MultipartFile> imageFiles, boolean primary) throws UploadingStorageException {
@@ -306,6 +314,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     private Page<AccommodationEntity> performSearch(AccommodationSearch criteria, Pageable pageable) {
+
         Page<AccommodationEntity> entityPage;
         if (hasServicesFilter(criteria)) {
             log.debug("Searching accommodations with services filter: {}", criteria.services());
@@ -325,13 +334,14 @@ public class AccommodationServiceImpl implements AccommodationService {
             }
         }
 
+        log.debug("Found {} accommodations", entityPage.getTotalElements());
         return entityPage;
     }
 
     private Page<AccommodationEntity> createCriteriaAndSearch(AccommodationSearch criteria, Pageable pageable, boolean withoutServices) {
        if (withoutServices){
            return accommodationRepository.search(
-                   criteria == null ? null : criteria.cityId(),
+                   criteria == null ? null : criteria.cityName(),
                    criteria == null ? null : criteria.minPrice(),
                    criteria == null ? null : criteria.maxPrice(),
                    criteria == null ? null : criteria.guests(),
@@ -343,7 +353,7 @@ public class AccommodationServiceImpl implements AccommodationService {
 
        // Para búsqueda con servicios, usar la nueva aproximación de dos consultas
        List<Long> accommodationIds = accommodationRepository.findAccommodationIdsWithServices(
-               criteria.cityId(),
+               criteria.cityName(),
                criteria.minPrice(),
                criteria.maxPrice(),
                criteria.guests(),
