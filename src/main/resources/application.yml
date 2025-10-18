@@ -42,6 +42,7 @@ jwt:
 logging:
   level:
     com.avanzada.alojamientos.security: DEBUG
+    com.avanzada.alojamientos.services: DEBUG
     org.springframework.security: DEBUG
 
 mercadopago:

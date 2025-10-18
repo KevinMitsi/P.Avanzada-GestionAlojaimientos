@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface AccommodationService {
@@ -15,4 +16,5 @@ public interface AccommodationService {
     void delete(Long userId, Long accommodationId);
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
     AccommodationMetrics getMetrics(Long accommodationId, LocalDate start, LocalDate end);
+    List<String> getAllServices();
 }

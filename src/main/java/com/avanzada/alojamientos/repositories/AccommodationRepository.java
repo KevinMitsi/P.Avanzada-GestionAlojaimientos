@@ -46,7 +46,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         SELECT a
         FROM AccommodationEntity a
         WHERE a.softDeleted = false
-          AND (:city IS NULL OR a.city.id = :city)
+          AND (:cityName IS NULL OR :cityName = '' OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :cityName, '%')))
           AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
           AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
           AND (:guests IS NULL OR a.maxGuests >= :guests)
@@ -62,7 +62,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
               )
         """)
     Page<AccommodationEntity> search(
-            @Param("city") Long city,
+            @Param("cityName") String cityName,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("guests") Integer guests,
@@ -83,7 +83,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         FROM AccommodationEntity a
         JOIN a.services s
         WHERE a.softDeleted = false
-          AND (:city IS NULL OR a.city.id = :city)
+          AND (:cityName IS NULL OR :cityName = '' OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :cityName, '%')))
           AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
           AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
           AND (:guests IS NULL OR a.maxGuests >= :guests)
@@ -102,7 +102,7 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         HAVING COUNT(DISTINCT s) = :servicesSize
         """)
     List<Long> findAccommodationIdsWithServices(
-            @Param("city") Long city,
+            @Param("cityName") String cityName,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("guests") Integer guests,
@@ -159,4 +159,16 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
             @Param("accommodationId") Long accommodationId,
             @Param("fromDate") LocalDate fromDate
     );
+
+    /**
+     * Obtener todos los servicios únicos de todos los alojamientos activos
+     */
+    @Query("""
+        SELECT DISTINCT s
+        FROM AccommodationEntity a
+        JOIN a.services s
+        WHERE a.softDeleted = false
+        ORDER BY s
+        """)
+    List<String> findAllUniqueServices();
 }

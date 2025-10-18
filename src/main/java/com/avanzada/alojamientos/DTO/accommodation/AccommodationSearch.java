@@ -2,7 +2,6 @@ package com.avanzada.alojamientos.DTO.accommodation;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 
@@ -11,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record AccommodationSearch(
-        @NotNull Long cityId,
+        String cityName,
         @Future LocalDate startDate,
         @Future LocalDate endDate,
         @Min(1) Integer guests,
