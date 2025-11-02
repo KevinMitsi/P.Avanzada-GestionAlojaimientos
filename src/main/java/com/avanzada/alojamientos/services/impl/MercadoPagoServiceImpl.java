@@ -2,19 +2,24 @@ package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.model.PaymentMethod;
 import com.avanzada.alojamientos.DTO.model.PaymentStatus;
+import com.avanzada.alojamientos.DTO.model.ReservationStatus;
 import com.avanzada.alojamientos.DTO.other.PaymentDTO;
 import com.avanzada.alojamientos.entities.AccommodationEntity;
+import com.avanzada.alojamientos.entities.PaymentEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
 import com.avanzada.alojamientos.exceptions.AccommodationNotFoundException;
 import com.avanzada.alojamientos.exceptions.ReservationNotFoundException;
 import com.avanzada.alojamientos.repositories.AccommodationRepository;
+import com.avanzada.alojamientos.repositories.PaymentRepository;
 import com.avanzada.alojamientos.repositories.ReservationRepository;
 import com.avanzada.alojamientos.services.MercadoPagoService;
 import com.avanzada.alojamientos.services.PaymentService;
 import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -34,6 +41,7 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
     private final ReservationRepository reservationRepository;
     private final PaymentService paymentService;
     private final AccommodationRepository accommodationRepository;
+    private final PaymentRepository paymentRepository;
 
     @Value("${mercadopago.access.token}")
     private String mercadoPagoToken;
@@ -106,11 +114,14 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             log.info("👤 Pagador configurado: name={}, email={}",
                     reservation.getUser().getName(), reservation.getUser().getEmail());
 
+            String webhookUrl = "https://public-turtles-boil.loca.lt/api/mercadopago/webhook";
+
+
             // 6️⃣ Crear la preferencia - SIN autoReturn para evitar problemas
             PreferenceRequest.PreferenceRequestBuilder requestBuilder = PreferenceRequest.builder()
                     .items(items)
                     .backUrls(backUrls)
-
+                    .notificationUrl(webhookUrl)
                     .payer(payer)
                     .externalReference("reservation_" + reservationId)
                     .statementDescriptor("ALOJAMIENTO");
@@ -177,4 +188,76 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             throw new Exception("Error al procesar el pago: " + e.getMessage(), e);
         }
     }
+
+    @Transactional
+    public void procesarPagoWebhook(Long paymentId) throws Exception {
+        // Configura tu token de acceso
+        MercadoPagoConfig.setAccessToken(mercadoPagoToken);
+
+        // Nuevo cliente oficial
+        PaymentClient client = new PaymentClient();
+        Payment mpPayment = client.get(paymentId);
+
+        if (mpPayment == null) {
+            log.warn("⚠ No se encontró información del pago {}", paymentId);
+            return;
+        }
+
+        log.info("📄 Detalle del pago desde MP: status={}, external_reference={}",
+                mpPayment.getStatus(), mpPayment.getExternalReference());
+
+        // Buscar la reserva asociada
+        String externalRef = mpPayment.getExternalReference();
+        Long reservationId = null;
+
+// Verificamos formato "reservation_38"
+        if (externalRef != null && externalRef.startsWith("reservation_")) {
+            reservationId = Long.parseLong(externalRef.replace("reservation_", ""));
+        } else {
+            reservationId = Long.parseLong(externalRef);
+        }
+        Optional<ReservationEntity> optionalReservation = reservationRepository.findById(reservationId);
+
+        if (optionalReservation.isEmpty()) {
+            log.error("❌ No se encontró la reserva con ID: {}", reservationId);
+            return;
+        }
+
+        ReservationEntity reservation = optionalReservation.get();
+
+        // Buscar el pago local
+        Optional<PaymentEntity> optionalPayment = paymentRepository.findByReservationId(reservationId)
+                .stream().findFirst();
+
+        if (optionalPayment.isEmpty()) {
+            log.error("❌ No se encontró el pago asociado a la reserva {}", reservationId);
+            return;
+        }
+
+        PaymentEntity localPayment = optionalPayment.get();
+
+        // Actualizar estado
+        switch (mpPayment.getStatus()) {
+            case "approved" -> {
+                localPayment.setStatus(PaymentStatus.COMPLETED);
+                localPayment.setPaidAt(LocalDateTime.now());
+                reservation.setStatus(ReservationStatus.CONFIRMED);
+                log.info("✅ Pago aprobado, reserva confirmada");
+            }
+            case "rejected" -> {
+                localPayment.setStatus(PaymentStatus.FAILED);
+                reservation.setStatus(ReservationStatus.CANCELLED);
+                log.info("❌ Pago rechazado, reserva cancelada");
+            }
+            default -> {
+                localPayment.setStatus(PaymentStatus.PENDING);
+                log.info("⌛ Pago pendiente");
+            }
+        }
+
+        paymentRepository.save(localPayment);
+        reservationRepository.save(reservation);
+    }
 }
+
+

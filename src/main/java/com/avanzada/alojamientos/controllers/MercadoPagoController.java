@@ -107,28 +107,45 @@ public class MercadoPagoController {
      * MercadoPago enviará notificaciones aquí cuando cambie el estado del pago
      */
     @PostMapping("/webhook")
-    public ResponseEntity<?> webhook(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> recibirWebhook(@RequestBody Map<String, Object> payload) {
         try {
-            log.info("🔔 Webhook recibido de MercadoPago: {}", payload);
+            log.info("🔔 Webhook recibido de Mercado Pago: {}", payload);
 
-            // Aquí puedes procesar las notificaciones de MercadoPago
-            // Por ejemplo, actualizar el estado de la reserva automáticamente
-
-            String type = (String) payload.get("type");
-            String action = (String) payload.get("action");
-
-            if ("payment".equals(type)) {
-                // Procesar notificación de pago
-                log.info("💳 Notificación de pago recibida: {}", action);
+            // Validación básica
+            if (payload == null || !payload.containsKey("type")) {
+                log.warn("⚠ Webhook inválido o sin 'type'");
+                return ResponseEntity.badRequest().build();
             }
 
-            return ResponseEntity.ok().build();
+            String type = (String) payload.get("type");
+
+            if (!"payment".equalsIgnoreCase(type)) {
+                log.info("📦 Tipo de notificación ignorado: {}", type);
+                return ResponseEntity.ok("Tipo no manejado");
+            }
+
+            // Extraer ID de pago
+            Map<String, Object> data = (Map<String, Object>) payload.get("data");
+            if (data == null || !data.containsKey("id")) {
+                log.warn("⚠ Payload sin ID de pago");
+                return ResponseEntity.badRequest().build();
+            }
+
+            Long paymentId = Long.parseLong(data.get("id").toString());
+            log.info("💳 ID de pago recibido: {}", paymentId);
+
+            // Consultar pago con MercadoPagoService
+            mercadoPagoService.procesarPagoWebhook(paymentId);
+
+            return ResponseEntity.ok("Notificación procesada correctamente");
 
         } catch (Exception e) {
             log.error("❌ Error procesando webhook: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
         }
     }
+
 
     // Métodos auxiliares para crear respuestas consistentes
 

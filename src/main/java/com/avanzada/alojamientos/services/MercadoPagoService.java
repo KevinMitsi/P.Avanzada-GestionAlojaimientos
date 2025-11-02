@@ -6,4 +6,6 @@ import java.util.Map;
 
 public interface MercadoPagoService {
     String createPreference(Long reservationId) throws Exception;
+
+    void procesarPagoWebhook(Long paymentId)throws Exception;
 }
