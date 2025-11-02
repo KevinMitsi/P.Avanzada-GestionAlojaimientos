@@ -3,8 +3,11 @@ package com.avanzada.alojamientos.services.impl;
 import com.avanzada.alojamientos.DTO.model.PaymentMethod;
 import com.avanzada.alojamientos.DTO.model.PaymentStatus;
 import com.avanzada.alojamientos.DTO.other.PaymentDTO;
+import com.avanzada.alojamientos.entities.AccommodationEntity;
 import com.avanzada.alojamientos.entities.ReservationEntity;
+import com.avanzada.alojamientos.exceptions.AccommodationNotFoundException;
 import com.avanzada.alojamientos.exceptions.ReservationNotFoundException;
+import com.avanzada.alojamientos.repositories.AccommodationRepository;
 import com.avanzada.alojamientos.repositories.ReservationRepository;
 import com.avanzada.alojamientos.services.MercadoPagoService;
 import com.avanzada.alojamientos.services.PaymentService;
@@ -30,14 +33,13 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
 
     private final ReservationRepository reservationRepository;
     private final PaymentService paymentService;
+    private final AccommodationRepository accommodationRepository;
 
     @Value("${mercadopago.access.token}")
     private String mercadoPagoToken;
 
     // URLs de retorno - IMPORTANTE: Cambiar en producción
-    private static final String SUCCESS_URL = "http://localhost:4200/reservation?status=approved";
-    private static final String FAILURE_URL = "http://localhost:4200/reservation?status=failure";
-    private static final String PENDING_URL = "http://localhost:4200/reservation?status=pending";
+
 
     @Transactional
     @Override
@@ -61,14 +63,13 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             }
 
             BigDecimal totalAmount = reservation.getTotalPrice();
-            String accommodationTitle = reservation.getAccommodation() != null
-                    ? reservation.getAccommodation().getTitle()
-                    : "Alojamiento";
+            AccommodationEntity accommodation=accommodationRepository.findById(reservation.getAccommodation().getId()).orElseThrow(() -> new AccommodationNotFoundException(
+                    "alojamiento no encontrada con id=" + reservation.getAccommodation().getId()));
 
             // 3️⃣ Crear el ítem con TODOS los campos requeridos
             PreferenceItemRequest item = PreferenceItemRequest.builder()
                     .id("res_" + reservation.getId())
-                    .title(accommodationTitle)
+                    .title(accommodation.getTitle())
                     .description("Reserva del " + reservation.getStartDate() + " al " + reservation.getEndDate())
                     .pictureUrl("https://via.placeholder.com/500x300.png?text=Alojamiento")
                     .categoryId("travel")
@@ -80,17 +81,21 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             List<PreferenceItemRequest> items = new ArrayList<>();
             items.add(item);
 
-            log.info("📦 Item creado: title={}, price={}", accommodationTitle, totalAmount);
+            log.info("📦 Item creado: title={}, price={}", accommodation.getTitle(), totalAmount);
 
-            // 4️⃣ Configurar URLs de retorno (OBLIGATORIAS)
+            String successUrl = "http://localhost:4200/reservation?status=approved&reservationId=" + reservationId;
+            String failureUrl = "http://localhost:4200/reservation?status=failure&reservationId=" + reservationId;
+            String pendingUrl = "http://localhost:4200/reservation?status=pending&reservationId=" + reservationId;
+
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success(SUCCESS_URL)
-                    .failure(FAILURE_URL)
-                    .pending(PENDING_URL)
+                    .success(successUrl)
+                    .failure(failureUrl)
+                    .pending(pendingUrl)
                     .build();
 
+
             log.info("🔗 URLs configuradas - Success: {}, Failure: {}, Pending: {}",
-                    SUCCESS_URL, FAILURE_URL, PENDING_URL);
+                    successUrl, failureUrl, pendingUrl);
 
             // 5️⃣ Configurar datos del pagador
             PreferencePayerRequest payer = PreferencePayerRequest.builder()
@@ -105,13 +110,14 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             PreferenceRequest.PreferenceRequestBuilder requestBuilder = PreferenceRequest.builder()
                     .items(items)
                     .backUrls(backUrls)
+
                     .payer(payer)
                     .externalReference("reservation_" + reservationId)
                     .statementDescriptor("ALOJAMIENTO");
 
             // Solo agregar autoReturn si las URLs están correctamente configuradas
             // Por ahora lo comentamos para que funcione
-            // requestBuilder.autoReturn("approved");
+            //requestBuilder.autoReturn("approved");
 
             PreferenceRequest preferenceRequest = requestBuilder.build();
 
