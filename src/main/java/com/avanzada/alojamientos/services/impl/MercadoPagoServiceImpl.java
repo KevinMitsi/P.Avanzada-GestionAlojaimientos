@@ -91,9 +91,12 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
 
             log.info("📦 Item creado: title={}, price={}", accommodation.getTitle(), totalAmount);
 
-            String successUrl = "http://localhost:4200/reservation?status=approved&reservationId=" + reservationId;
-            String failureUrl = "http://localhost:4200/reservation?status=failure&reservationId=" + reservationId;
-            String pendingUrl = "http://localhost:4200/reservation?status=pending&reservationId=" + reservationId;
+            String baseFrontUrl = "https://ten-readers-cross.loca.lt";
+
+            String successUrl = baseFrontUrl + "/reservation?status=approved&reservationId=" + reservationId;
+            String failureUrl = baseFrontUrl + "/reservation?status=failure&reservationId=" + reservationId;
+            String pendingUrl = baseFrontUrl + "/reservation?status=pending&reservationId=" + reservationId;
+
 
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
                     .success(successUrl)
@@ -126,11 +129,11 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
                     .externalReference("reservation_" + reservationId)
                     .statementDescriptor("ALOJAMIENTO");
 
-            // Solo agregar autoReturn si las URLs están correctamente configuradas
-            // Por ahora lo comentamos para que funcione
-            //requestBuilder.autoReturn("approved");
 
-            PreferenceRequest preferenceRequest = requestBuilder.build();
+
+            PreferenceRequest preferenceRequest = requestBuilder
+                    .autoReturn("approved") // 👈 esta línea permite el redireccionamiento automático
+                    .build();
 
             log.info("🚀 Creando preferencia en MercadoPago...");
 
