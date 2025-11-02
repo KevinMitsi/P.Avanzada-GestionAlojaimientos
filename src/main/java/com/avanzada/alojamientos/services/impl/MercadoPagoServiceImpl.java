@@ -91,7 +91,7 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
 
             log.info("📦 Item creado: title={}, price={}", accommodation.getTitle(), totalAmount);
 
-            String baseFrontUrl = "https://ten-readers-cross.loca.lt";
+            String baseFrontUrl = "https://alojamiento.loca.lt";
 
             String successUrl = baseFrontUrl + "/reservation?status=approved&reservationId=" + reservationId;
             String failureUrl = baseFrontUrl + "/reservation?status=failure&reservationId=" + reservationId;
