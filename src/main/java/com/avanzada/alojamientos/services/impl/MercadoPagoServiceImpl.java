@@ -117,7 +117,8 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             log.info("👤 Pagador configurado: name={}, email={}",
                     reservation.getUser().getName(), reservation.getUser().getEmail());
 
-            String webhookUrl = "https://public-turtles-boil.loca.lt/api/mercadopago/webhook";
+            String webhookUrl = "https://alojamiento.loca.lt/api/mercadopago/webhook";
+
 
 
             // 6️⃣ Crear la preferencia - SIN autoReturn para evitar problemas
