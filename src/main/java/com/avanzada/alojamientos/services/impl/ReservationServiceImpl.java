@@ -1,7 +1,7 @@
 package com.avanzada.alojamientos.services.impl;
 
 import com.avanzada.alojamientos.DTO.model.CancelledBy;
-import com.avanzada.alojamientos.DTO.model.UserRole;
+
 import com.avanzada.alojamientos.DTO.reservation.CreateReservationDTO;
 import com.avanzada.alojamientos.DTO.reservation.ReservationDTO;
 import com.avanzada.alojamientos.DTO.reservation.ReservationSearchCriteria;
@@ -65,10 +65,6 @@ public class ReservationServiceImpl implements ReservationService {
         // 1. Validar que quien reserva es un USER (no un HOST)
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        if (!user.hasRole(UserRole.USER)) {
-            throw new ReservationPermissionException("Only users with role USER can make reservations");
-        }
 
         // 2. Validar que el alojamiento existe y no está eliminado
         AccommodationEntity accommodation = accommodationRepository.findById(dto.accommodationId())
@@ -148,7 +144,6 @@ public class ReservationServiceImpl implements ReservationService {
 
             // Enviar email al anfitrión
             EmailDTO hostEmailDTO = new EmailDTO(
-                accommodation.getHost().getEmail(),
                 "Nueva reserva en tu alojamiento - " + accommodation.getTitle(),
                 String.format("""
                     Hola %s,
@@ -172,7 +167,7 @@ public class ReservationServiceImpl implements ReservationService {
                     nights,
                     totalPrice,
                     TEAM_SIGNATURE
-                )
+                ),accommodation.getHost().getEmail()
             );
             emailNotificationService.sendMail(hostEmailDTO);
         } catch (Exception e) {
@@ -198,7 +193,6 @@ public class ReservationServiceImpl implements ReservationService {
 
             // Enviar email de confirmación al usuario
             EmailDTO guestEmailDTO = new EmailDTO(
-                user.getEmail(),
                 "Confirmación de reserva - " + accommodation.getTitle(),
                 String.format("""
                     Hola %s,
@@ -221,7 +215,7 @@ public class ReservationServiceImpl implements ReservationService {
                     nights,
                     totalPrice,
                     TEAM_SIGNATURE
-                )
+                ),user.getEmail()
             );
             emailNotificationService.sendMail(guestEmailDTO);
         } catch (Exception e) {
