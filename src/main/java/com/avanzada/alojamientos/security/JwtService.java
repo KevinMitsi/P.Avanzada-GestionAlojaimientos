@@ -21,7 +21,7 @@ public class JwtService {
     @Value("${jwt.secret:mySecretKeyForJwtTokenGenerationThatShouldBeVeryLongAndSecure123456789}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration:86400000}") // 24 horas por defecto
+    @Value("${jwt.expiration:3600000}") // 1 hora por defecto
     private long jwtExpiration;
 
     /**
