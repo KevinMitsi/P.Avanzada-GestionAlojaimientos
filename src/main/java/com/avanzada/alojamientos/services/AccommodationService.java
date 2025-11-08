@@ -17,4 +17,5 @@ public interface AccommodationService {
     Page<AccommodationDTO> findByHost(Long hostId, Pageable pageable);
     AccommodationMetrics getMetrics(Long accommodationId, LocalDate start, LocalDate end);
     List<String> getAllServices();
+    boolean isHostAccommodation(Long hostId, Long accommodationId);
 }

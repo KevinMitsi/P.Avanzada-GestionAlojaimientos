@@ -274,6 +274,11 @@ public class AccommodationServiceImpl implements AccommodationService {
         }
     }
 
+    @Override
+    public boolean isHostAccommodation(Long hostId, Long accommodationId) {
+        return accommodationRepository.existsByIdAndHostId(accommodationId, hostId);
+    }
+
     // Private helper methods
 
     private void setDefaultValues(AccommodationEntity entity) {

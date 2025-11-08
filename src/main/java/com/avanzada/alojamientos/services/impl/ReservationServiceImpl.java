@@ -425,7 +425,6 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         EmailDTO guestEmailDTO = new EmailDTO(
-            reservation.getUser().getEmail(),
             RESERVATION_CANCELLED_SUBJECT + reservation.getAccommodation().getTitle(),
             String.format("""
                 Hola %s,
@@ -447,7 +446,7 @@ public class ReservationServiceImpl implements ReservationService {
                 reasonText,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATETIME_FORMAT)),
                 TEAM_SIGNATURE
-            )
+            ),reservation.getUser().getEmail()
         );
         emailNotificationService.sendMail(guestEmailDTO);
     }
@@ -591,9 +590,9 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         EmailDTO emailDTO = new EmailDTO(
-            reservation.getUser().getEmail(),
             emailSubject,
-            emailBody
+            emailBody,
+                reservation.getUser().getEmail()
         );
         emailNotificationService.sendMail(emailDTO);
     }

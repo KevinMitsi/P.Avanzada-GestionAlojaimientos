@@ -168,7 +168,8 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
         FROM AccommodationEntity a
         JOIN a.services s
         WHERE a.softDeleted = false
-        ORDER BY s
         """)
     List<String> findAllUniqueServices();
+
+    Boolean existsByIdAndHostId(Long accommodationId, Long hostId);
 }
