@@ -3,6 +3,7 @@ package com.avanzada.alojamientos.security;
 import com.avanzada.alojamientos.entities.UserEntity;
 import com.avanzada.alojamientos.exceptions.UserNotFoundException;
 import com.avanzada.alojamientos.repositories.UserRepository;
+import com.avanzada.alojamientos.services.AccommodationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class CurrentUserService {
 
     private final UserRepository userRepository;
+    private final AccommodationService accommodationService;
 
     public String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -41,5 +43,9 @@ public class CurrentUserService {
         UserEntity user = getCurrentUser();
         return user.getHostProfile() != null; // o por rol si aplica
     }
-}
 
+    public boolean isCurrentHostOfAccommodation(Long accommodationId) {
+        Long hostId = getCurrentHostId();
+        return accommodationService.isHostAccommodation(hostId, accommodationId);
+    }
+}

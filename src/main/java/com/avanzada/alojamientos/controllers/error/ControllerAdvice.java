@@ -72,7 +72,7 @@ public class ControllerAdvice {
     public ResponseEntity<ResponseErrorDTO> handleReservationValidationException(ReservationValidationException ex) {
         ResponseErrorDTO error = new ResponseErrorDTO(
                 HttpStatus.BAD_REQUEST.value(),
-                "Error de validación en la reserva",
+                "Error de validación en la reserva" + ex.getMessage(),
                 Map.of(KEY_IN_MAP, ex.getMessage())
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
