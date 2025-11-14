@@ -20,15 +20,12 @@ public class AccommodationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", columnDefinition = "BIGINT UNSIGNED")
     private Long id;
 
-
-    @Column(nullable = false, length = 200,
-            columnDefinition = "VARCHAR(200) CHECK (char_length(title) >= 5)")
+    @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column
     private String description;
 
     @Column(nullable = false, length = 500)
@@ -37,8 +34,7 @@ public class AccommodationEntity {
     @Embedded
     private Coordinates coordinates;
 
-    @Column(nullable = false, precision = 10, scale = 2,
-            columnDefinition = "DECIMAL(10,2) CHECK (price_per_night > 0)")
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal pricePerNight;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -46,7 +42,7 @@ public class AccommodationEntity {
             name = "accommodation_services",
             joinColumns = @JoinColumn(
                     name = "accommodation_id",
-                    columnDefinition = "BIGINT UNSIGNED NOT NULL"
+                    nullable = false
             )
     )
     @Column(name = "service")
@@ -54,8 +50,7 @@ public class AccommodationEntity {
 
 
     // Número de huéspedes mínimo = 1
-    @Column(nullable = false,
-            columnDefinition = "INT CHECK (max_guests >= 1)")
+    @Column(nullable = false)
     private Integer maxGuests;
 
     @Column(nullable = false)

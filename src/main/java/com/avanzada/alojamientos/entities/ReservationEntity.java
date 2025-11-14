@@ -55,7 +55,7 @@ public class ReservationEntity {
     private CancelledBy cancelledBy;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "accommodation_id", nullable = false)
     private AccommodationEntity accommodation;
 
     @ManyToOne(fetch = FetchType.EAGER)

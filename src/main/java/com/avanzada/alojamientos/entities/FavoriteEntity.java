@@ -30,7 +30,7 @@ public class FavoriteEntity {
     private UserEntity user;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "accommodation_id", nullable = false)
     private AccommodationEntity accommodation;
 
     @PrePersist

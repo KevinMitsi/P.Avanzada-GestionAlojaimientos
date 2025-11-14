@@ -22,7 +22,7 @@ public class CommentEntity {
     @Column(nullable = false)
     private Integer rating; // la validación de rango se puede manejar en lógica de negocio
 
-    @Column(nullable = false, columnDefinition = "TEXT", length = 500, name="comment_text")
+    @Column(nullable = false, length = 500, name="comment_text")
     private String text;
 
     @Column(nullable = false)
@@ -36,7 +36,7 @@ public class CommentEntity {
     private ReservationEntity reservation;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "accommodation_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "accommodation_id", nullable = false)
     private AccommodationEntity accommodation;
 
     @ManyToOne(fetch = FetchType.EAGER)
