@@ -77,18 +77,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/accommodations/**").permitAll()
                         .requestMatchers("/", "/mercadopago/**").permitAll()
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
-
-                        // Endpoints públicos (sin autenticación)
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/password-reset/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // Endpoints específicos por rol
+                        .requestMatchers("/actuator/health", "/health").permitAll() // Permitir acceso público a /health y /actuator/health
                         .requestMatchers("/api/admin/**").hasRole(ADMIN_ROLE)
                         .requestMatchers("/api/host/**").hasAnyRole(HOST_ROLE, ADMIN_ROLE)
-
-                        // Operaciones específicas de usuarios HOST
                         .requestMatchers(HttpMethod.POST, "/api/accommodations").hasRole(HOST_ROLE)
                         .requestMatchers(HttpMethod.PUT, "/api/accommodations/**").hasRole(HOST_ROLE)
                         .requestMatchers(HttpMethod.DELETE, "/api/accommodations/**").hasRole(HOST_ROLE)
@@ -97,11 +92,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasRole(HOST_ROLE)
                         .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/accommodations/host/**").hasRole(HOST_ROLE)
-
-
-                        //Admin users
                         .requestMatchers("/api/users/admin/**").hasRole(ADMIN_ROLE)
-                        // Cualquier otra petición requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
