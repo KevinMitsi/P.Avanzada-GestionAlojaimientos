@@ -1,5 +1,4 @@
 spring:
-
   application:
     name: alojamientos
 
@@ -9,9 +8,11 @@ spring:
     password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
+      maximum-pool-size: 5  # Reducido de 10
+      minimum-idle: 1        # Reducido de 2
+      connection-timeout: 20000  # Reducido de 30000
+      idle-timeout: 300000
+      max-lifetime: 600000
 
   jpa:
     hibernate:
@@ -21,10 +22,13 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         show_sql: false
+        jdbc:
+          time_zone: UTC
     open-in-view: false
 
 server:
   port: ${PORT:8080}
+  shutdown: graceful  # Añadido
 
 # Configuración de Cloudinary
 cloudinary:
@@ -40,19 +44,28 @@ jwt:
 # Logging
 logging:
   level:
-    com.avanzada.alojamientos: DEBUG
+    com.avanzada.alojamientos: INFO  # Cambiado de DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
-    root: info
-    springframework: DEBUG
-
+    root: INFO  # Cambiado de info
+    org.springframework: INFO  # Cambiado de DEBUG
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
-
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true  # IMPORTANTE para Railway
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
 
 mercadopago:
   access:
