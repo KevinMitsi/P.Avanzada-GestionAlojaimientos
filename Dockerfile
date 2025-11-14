@@ -1,32 +1,34 @@
 #
-# ========== STAGE 1: BUILD ==========
+# Etapa de construcción
 #
 FROM gradle:8.7-jdk21 AS build
+USER gradle
 WORKDIR /home/gradle/project
 
+# Copiar solo archivos necesarios primero para aprovechar el cache de dependencias
+COPY --chown=gradle:gradle build.gradle settings.gradle ./
 COPY --chown=gradle:gradle gradle gradle
-COPY --chown=gradle:gradle gradlew build.gradle settings.gradle ./
+RUN gradle --no-daemon build -x test || return 0
 
-RUN ./gradlew --no-daemon dependencies || true
+# Copiar el resto del código fuente
+COPY --chown=gradle:gradle . .
 
-COPY --chown=gradle:gradle src src
-
-RUN ./gradlew --no-daemon clean bootJar -x test
+# Construir el archivo JAR
+RUN gradle --no-daemon bootJar
 
 #
-# ========== STAGE 2: RUNTIME ==========
+# Etapa de empaquetado
 #
-# ❗ Mejor sin Alpine: más estable en Railway
 FROM eclipse-temurin:21-jre
-
 ENV APP_HOME=/app
-WORKDIR $APP_HOME
+WORKDIR ${APP_HOME}
 
-RUN addgroup --system spring && adduser --system --ingroup spring spring
-USER spring
+# Argumento opcional para puerto
+ARG PORT=8080
+ENV PORT=${PORT}
 
+# Copiar el JAR generado desde la etapa de construcción
 COPY --from=build /home/gradle/project/build/libs/*.jar app.jar
 
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-jar", "app.jar"]
+EXPOSE ${PORT}
+ENTRYPOINT ["java", "-jar", "app.jar"]
