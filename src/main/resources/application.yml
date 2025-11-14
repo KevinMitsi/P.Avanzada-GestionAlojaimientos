@@ -7,9 +7,26 @@ spring:
   application:
     name: alojamientos
 
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        show_sql: false
+    open-in-view: false
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 # Configuración de Cloudinary
 cloudinary:
@@ -19,18 +36,16 @@ cloudinary:
 
 # JWT Configuration
 jwt:
-  secret: mySecretKeyForJwtTokenGenerationThatShouldBeVeryLongAndSecure123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+  secret: ${JWT_SECRET:mySecretKeyForJwtTokenGenerationThatShouldBeVeryLongAndSecure123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz}
   expiration: 8640000
 
-
-
-# Logging para debugging (opcional)
+# Logging
 logging:
   level:
-    com.avanzada.alojamientos.security: DEBUG
-    com.avanzada.alojamientos.services: DEBUG
-    org.springframework.security: DEBUG
+    com.avanzada.alojamientos: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
 
 mercadopago:
   access:
-    token: APP_USR-6031776921093655-100900-11e4ceef9cd55ec049276ca19a7f8a81-2914163040
+    token: ${MERCADOPAGO_ACCESS_TOKEN:APP_USR-6031776921093655-100900-11e4ceef9cd55ec049276ca19a7f8a81-2914163040}
