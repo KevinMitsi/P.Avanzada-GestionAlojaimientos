@@ -1,8 +1,4 @@
 spring:
-  security:
-    user:
-      name: ${SECURITY_USER_NAME:admin}
-      password: ${SECURITY_USER_PASSWORD:admin}
 
   application:
     name: alojamientos
