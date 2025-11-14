@@ -44,9 +44,12 @@ jwt:
 # Logging
 logging:
   level:
-    com.avanzada.alojamientos: INFO
+    com.avanzada.alojamientos: DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    root: info
+    springframework: DEBUG
+
 
 management:
   endpoints:
