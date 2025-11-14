@@ -48,6 +48,13 @@ logging:
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+
 mercadopago:
   access:
     token: ${MERCADOPAGO_ACCESS_TOKEN:APP_USR-6031776921093655-100900-11e4ceef9cd55ec049276ca19a7f8a81-2914163040}
