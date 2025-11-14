@@ -91,7 +91,7 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
 
             log.info("📦 Item creado: title={}, price={}", accommodation.getTitle(), totalAmount);
 
-            String baseFrontUrl = "https://alojamiento.loca.lt";
+            String baseFrontUrl = "https://alojamientos-f3f82.web.app";
 
             String successUrl = baseFrontUrl + "/reservation?status=approved&reservationId=" + reservationId;
             String failureUrl = baseFrontUrl + "/reservation?status=failure&reservationId=" + reservationId;
@@ -117,7 +117,7 @@ public class MercadoPagoServiceImpl implements MercadoPagoService {
             log.info("👤 Pagador configurado: name={}, email={}",
                     reservation.getUser().getName(), reservation.getUser().getEmail());
 
-            String webhookUrl = "https://alojamiento.loca.lt/api/mercadopago/webhook";
+            String webhookUrl = "https://alojamientos-f3f82.web.app/api/mercadopago/webhook";
 
 
 
