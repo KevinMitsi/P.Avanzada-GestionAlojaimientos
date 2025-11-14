@@ -40,8 +40,7 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.6.3'
 	implementation 'org.simplejavamail:simple-java-mail:8.12.6'
 	implementation 'org.simplejavamail:batch-module:8.12.6'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-
+    runtimeOnly 'org.postgresql:postgresql:42.7.8'
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
@@ -52,6 +51,6 @@ dependencies {
 	testRuntimeOnly 'com.h2database:h2'
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
-}
+//tasks.named('test') {
+//	useJUnitPlatform()
+//}

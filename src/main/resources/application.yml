@@ -7,17 +7,17 @@ spring:
   application:
     name: alojamientos
   datasource:
-    url: jdbc:mysql://localhost:3306/alojamientos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${MYSQL_ROOT_USER:root}
-    password: ${MYSQL_ROOT_PASSWORD:admin}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?serverTimezone=UTC
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         show_sql: true
     open-in-view: false
