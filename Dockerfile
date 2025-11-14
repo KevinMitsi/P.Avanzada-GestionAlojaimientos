@@ -5,30 +5,44 @@ FROM gradle:8.7-jdk21 AS build
 USER gradle
 WORKDIR /home/gradle/project
 
-# Copiar solo archivos necesarios primero para aprovechar el cache de dependencias
+# Copiar archivos de configuración de Gradle
 COPY --chown=gradle:gradle build.gradle settings.gradle ./
 COPY --chown=gradle:gradle gradle gradle
-RUN gradle --no-daemon build -x test || return 0
+COPY --chown=gradle:gradle gradlew ./
 
-# Copiar el resto del código fuente
-COPY --chown=gradle:gradle . .
+# Descargar dependencias (para cache)
+RUN gradle --no-daemon dependencies || true
 
-# Construir el archivo JAR
-RUN gradle --no-daemon bootJar
+# Copiar el código fuente
+COPY --chown=gradle:gradle src ./src
+
+# Construir el JAR (sin tests para faster build)
+RUN gradle --no-daemon clean bootJar -x test
+
+# Verificar que el JAR existe
+RUN ls -la /home/gradle/project/build/libs/
 
 #
-# Etapa de empaquetado
+# Etapa de runtime
 #
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21-jre-alpine
 ENV APP_HOME=/app
 WORKDIR ${APP_HOME}
 
-# Argumento opcional para puerto
-ARG PORT=8080
-ENV PORT=${PORT}
+# Crear usuario no-root
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
 
-# Copiar el JAR generado desde la etapa de construcción
+# Copiar el JAR desde build stage
 COPY --from=build /home/gradle/project/build/libs/*.jar app.jar
 
-EXPOSE ${PORT}
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Railway usa la variable PORT automáticamente
+EXPOSE 8080
+
+# Configuración de JVM optimizada para contenedores
+ENTRYPOINT ["java", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", \
+    "app.jar"]
