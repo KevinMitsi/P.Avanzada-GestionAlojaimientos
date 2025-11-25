@@ -73,45 +73,24 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
 
     /**
      * Búsqueda que filtra también por servicios.
-     * Se espera que `a. services` sea una colección (por ejemplo Set<String> o entidad embebida)
-     * y que se pase la lista de servicios requeridos en 'services'. La consulta agrupa por alojamiento
-     * y exige que el número de servicios distintos encontrados sea igual al tamaño del conjunto requerido,
-     * esto asegura que el alojamiento contiene *todos* los servicios solicitados.
+     * NOTA: Este método ya NO usa consulta JPQL, se implementa con lógica Java en el servicio.
+     * Se mantiene la firma para compatibilidad pero la implementación se hace en AccommodationServiceImpl.
      */
-    @Query("""
-        SELECT a.id
-        FROM AccommodationEntity a
-        JOIN a.services s
-        WHERE a.softDeleted = false
-          AND (:cityName IS NULL OR :cityName = '' OR LOWER(a.city.name) LIKE LOWER(CONCAT('%', :cityName, '%')))
-          AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice)
-          AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice)
-          AND (:guests IS NULL OR a.maxGuests >= :guests)
-          AND (
-                :startDate IS NULL OR :endDate IS NULL
-                OR NOT EXISTS (
-                    SELECT r FROM com.avanzada.alojamientos.entities.ReservationEntity r
-                    WHERE r.accommodation = a
-                      AND (r.status IS NULL OR r.status NOT IN ('CANCELLED', 'CANCEL'))
-                      AND r.startDate <= :endDate
-                      AND r.endDate >= :startDate
-                )
-              )
-          AND s IN :services
-        GROUP BY a.id
-        HAVING COUNT(DISTINCT s) = :servicesSize
-        """)
-    List<Long> findAccommodationIdsWithServices(
-            @Param("cityName") String cityName,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
-            @Param("guests") Integer guests,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("services") List<String> services,
-            @Param("servicesSize") long servicesSize,
+    default List<Long> findAccommodationIdsWithServices(
+            String cityName,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Integer guests,
+            LocalDate startDate,
+            LocalDate endDate,
+            List<String> services,
+            long servicesSize,
             Pageable pageable
-    );
+    ) {
+        // Este método ahora se implementa con lógica Java en el servicio
+        // Mantener como default method para evitar romper la interfaz
+        throw new UnsupportedOperationException("Este método debe ser llamado desde AccommodationServiceImpl");
+    }
 
     /**
      * Buscar alojamientos por ID con EntityGraph
@@ -130,6 +109,21 @@ public interface AccommodationRepository extends JpaRepository<AccommodationEnti
     @EntityGraph(attributePaths = {"images", "host", "city", "services"})
     @NonNull
     Page<AccommodationEntity> findAll(@NonNull Pageable pageable);
+
+    /**
+     * Obtener TODOS los alojamientos con todas las relaciones cargadas (modo arcaico para filtrado manual)
+     * NOTA: No se puede cargar 'reservations' junto con 'images' porque ambas son List (bags)
+     * y Hibernate lanza MultipleBagFetchException. Se cargan las reservations por separado.
+     */
+    @EntityGraph(attributePaths = {"images", "host", "city", "services"})
+    @Query("SELECT a FROM AccommodationEntity a")
+    List<AccommodationEntity> findAllWithBasicRelations();
+
+    /**
+     * Cargar solo las reservaciones de todos los alojamientos (para filtrado manual)
+     */
+    @Query("SELECT DISTINCT a FROM AccommodationEntity a LEFT JOIN FETCH a.reservations")
+    List<AccommodationEntity> findAllWithReservations();
 
     /**
      * Busca un alojamiento por ID con reservations para métricas

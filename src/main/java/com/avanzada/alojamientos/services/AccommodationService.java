@@ -1,6 +1,7 @@
 package com.avanzada.alojamientos.services;
 
 import com.avanzada.alojamientos.DTO.accommodation.*;
+import com.avanzada.alojamientos.entities.AccommodationEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,4 +19,5 @@ public interface AccommodationService {
     AccommodationMetrics getMetrics(Long accommodationId, LocalDate start, LocalDate end);
     List<String> getAllServices();
     boolean isHostAccommodation(Long hostId, Long accommodationId);
+    Page<AccommodationEntity> searchWithJavaLogic(AccommodationSearch criteria, Pageable pageable, boolean filterServices);
 }

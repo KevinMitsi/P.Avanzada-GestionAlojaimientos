@@ -88,8 +88,13 @@ public class AccommodationServiceImpl implements AccommodationService {
             return Optional.empty();
         }
 
-        return accommodationRepository.findById(accommodationId)
+        // Modo arcaico: obtener TODOS los alojamientos con relaciones básicas y filtrar con lógica Java
+        List<AccommodationEntity> allAccommodations = accommodationRepository.findAllWithBasicRelations();
+
+        return allAccommodations.stream()
+                .filter(accommodation -> accommodation.getId() != null && accommodation.getId().equals(accommodationId))
                 .filter(accommodation -> !Boolean.TRUE.equals(accommodation.getSoftDeleted()))
+                .findFirst()
                 .map(accommodationMapper::toAccommodationDTO);
     }
 
@@ -345,39 +350,146 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     private Page<AccommodationEntity> createCriteriaAndSearch(AccommodationSearch criteria, Pageable pageable, boolean withoutServices) {
        if (withoutServices){
-           return accommodationRepository.search(
-                   criteria == null ? null : criteria.cityName(),
-                   criteria == null ? null : criteria.minPrice(),
-                   criteria == null ? null : criteria.maxPrice(),
-                   criteria == null ? null : criteria.guests(),
-                   criteria == null ? null : criteria.startDate(),
-                   criteria == null ? null : criteria.endDate(),
-                   pageable
-           );
+           // Modo arcaico: usar findAll() y filtrar con lógica Java
+           return searchWithJavaLogic(criteria, pageable, false);
        }
 
-       // Para búsqueda con servicios, usar la nueva aproximación de dos consultas
-       List<Long> accommodationIds = accommodationRepository.findAccommodationIdsWithServices(
-               criteria.cityName(),
-               criteria.minPrice(),
-               criteria.maxPrice(),
-               criteria.guests(),
-               criteria.startDate(),
-               criteria.endDate(),
-               criteria.services(),
-               criteria.services().size(),
-               pageable
-       );
+       // Para búsqueda con servicios, también usar lógica Java tradicional
+       return searchWithJavaLogic(criteria, pageable, true);
+    }
 
-       if (accommodationIds.isEmpty()) {
-           return Page.empty(pageable);
-       }
 
-       // Cargar las entidades completas con EntityGraph
-       List<AccommodationEntity> accommodations = accommodationRepository.findByIdsWithEntityGraph(accommodationIds);
+    public Page<AccommodationEntity> searchWithJavaLogic(AccommodationSearch criteria, Pageable pageable, boolean filterServices) {
+        // Obtener TODOS los alojamientos con relaciones básicas (arcaico)
+        List<AccommodationEntity> allAccommodations = accommodationRepository.findAllWithBasicRelations();
 
-       // Crear una Page manualmente
-       return new PageImpl<>(accommodations, pageable, accommodations.size());
+        // Crear un mapa de ID -> AccommodationEntity para eficiencia
+        Map<Long, AccommodationEntity> accommodationMap = allAccommodations.stream()
+                .collect(java.util.stream.Collectors.toMap(AccommodationEntity::getId, a -> a));
+
+        // Si necesitamos filtrar por fechas, cargar las reservaciones
+        if (criteria != null && criteria.startDate() != null && criteria.endDate() != null) {
+            List<AccommodationEntity> accommodationsWithReservations = accommodationRepository.findAllWithReservations();
+
+            // Copiar las reservaciones al mapa de alojamientos
+            for (AccommodationEntity accWithReservations : accommodationsWithReservations) {
+                AccommodationEntity existing = accommodationMap.get(accWithReservations.getId());
+                if (existing != null) {
+                    existing.setReservations(accWithReservations.getReservations());
+                }
+            }
+        }
+
+        // Filtrar con lógica Java
+        List<AccommodationEntity> filteredAccommodations = allAccommodations.stream()
+                .filter(accommodation -> {
+                    // Filtro: softDeleted = false
+                    if (Boolean.TRUE.equals(accommodation.getSoftDeleted())) {
+                        return false;
+                    }
+
+                    // Filtro: cityName (parcial, case-insensitive)
+                    if (criteria != null && criteria.cityName() != null && !criteria.cityName().isEmpty()) {
+                        if (accommodation.getCity() == null || accommodation.getCity().getName() == null) {
+                            return false;
+                        }
+                        String cityNameLower = accommodation.getCity().getName().toLowerCase();
+                        String searchCityLower = criteria.cityName().toLowerCase();
+                        if (!cityNameLower.contains(searchCityLower)) {
+                            return false;
+                        }
+                    }
+
+                    // Filtro: minPrice
+                    if (criteria != null && criteria.minPrice() != null) {
+                        if (accommodation.getPricePerNight() == null ||
+                            accommodation.getPricePerNight().compareTo(criteria.minPrice()) < 0) {
+                            return false;
+                        }
+                    }
+
+                    // Filtro: maxPrice
+                    if (criteria != null && criteria.maxPrice() != null) {
+                        if (accommodation.getPricePerNight() == null ||
+                            accommodation.getPricePerNight().compareTo(criteria.maxPrice()) > 0) {
+                            return false;
+                        }
+                    }
+
+                    // Filtro: guests
+                    if (criteria != null && criteria.guests() != null) {
+                        if (accommodation.getMaxGuests() == null ||
+                            accommodation.getMaxGuests() < criteria.guests()) {
+                            return false;
+                        }
+                    }
+
+                    // Filtro: disponibilidad (startDate y endDate)
+                    if (criteria != null && criteria.startDate() != null && criteria.endDate() != null) {
+                        // Verificar que no exista una reserva que se solape
+                        if (accommodation.getReservations() != null) {
+                            boolean hasConflict = accommodation.getReservations().stream()
+                                    .anyMatch(reservation -> {
+                                        // Ignorar reservas canceladas
+                                        if (reservation.getStatus() != null &&
+                                            (reservation.getStatus().name().equals("CANCELLED") ||
+                                             reservation.getStatus().name().equals("CANCEL"))) {
+                                            return false;
+                                        }
+
+                                        // Verificar solapamiento: r.startDate <= endDate AND r.endDate >= startDate
+                                        LocalDate rStart = reservation.getStartDate();
+                                        LocalDate rEnd = reservation.getEndDate();
+
+                                        if (rStart == null || rEnd == null) {
+                                            return false;
+                                        }
+
+                                        return !rStart.isAfter(criteria.endDate()) &&
+                                               !rEnd.isBefore(criteria.startDate());
+                                    });
+
+                            if (hasConflict) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    // Filtro: servicios (si filterServices == true)
+                    if (filterServices && criteria != null && criteria.services() != null && !criteria.services().isEmpty()) {
+                        if (accommodation.getServices() == null) {
+                            return false;
+                        }
+
+                        // Contar cuántos servicios distintos del criteria están en el accommodation
+                        Set<String> accommodationServices = accommodation.getServices();
+                        long matchingServicesCount = criteria.services().stream()
+                                .filter(accommodationServices::contains)
+                                .distinct()
+                                .count();
+
+                        // El alojamiento debe tener TODOS los servicios solicitados
+                        if (matchingServicesCount != criteria.services().size()) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
+                .toList();
+
+        // Aplicar paginación manual
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filteredAccommodations.size());
+
+        List<AccommodationEntity> pagedAccommodations;
+        if (start >= filteredAccommodations.size()) {
+            pagedAccommodations = Collections.emptyList();
+        } else {
+            pagedAccommodations = filteredAccommodations.subList(start, end);
+        }
+
+        return new PageImpl<>(pagedAccommodations, pageable, filteredAccommodations.size());
     }
 
     private boolean hasServicesFilter(AccommodationSearch criteria) {
