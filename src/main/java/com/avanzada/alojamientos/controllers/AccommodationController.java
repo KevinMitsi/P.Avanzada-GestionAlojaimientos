@@ -164,68 +164,6 @@ public class AccommodationController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/search")
-    @Operation(
-            summary = "Buscar alojamientos",
-            description = "Busca alojamientos según criterios de búsqueda. Este endpoint es público y no requiere autenticación. Soporta paginación y filtros por nombre de ciudad (búsqueda parcial), fechas, número de huéspedes, rango de precios y servicios."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Búsqueda realizada exitosamente",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Parámetros de búsqueda inválidos",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ResponseErrorDTO.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Error interno al realizar la búsqueda",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ResponseErrorDTO.class),
-                            examples = @ExampleObject(value = """
-                                    {
-                                        "code": 500,
-                                        "message": "Error al buscar alojamientos",
-                                        "details": {
-                                            "detalle": "Error en la consulta a la base de datos"
-                                        }
-                                    }
-                                    """)
-                    )
-            )
-    })
-    public ResponseEntity<Page<AccommodationFoundDTO>> search(
-            @Parameter(description = "Nombre de la ciudad (búsqueda parcial, no sensible a mayúsculas)", example = "Bogotá")
-            @RequestParam(required = false) String cityName,
-            @Parameter(description = "Fecha de inicio (formato: YYYY-MM-DD)", example = "2025-01-15")
-            @RequestParam(required = false) String startDate,
-            @Parameter(description = "Fecha de fin (formato: YYYY-MM-DD)", example = "2025-01-20")
-            @RequestParam(required = false) String endDate,
-            @Parameter(description = "Número de huéspedes", example = "2")
-            @RequestParam(required = false) Integer guests,
-            @Parameter(description = "Precio mínimo por noche", example = "50.00")
-            @RequestParam(required = false) BigDecimal minPrice,
-            @Parameter(description = "Precio máximo por noche", example = "200.00")
-            @RequestParam(required = false) BigDecimal maxPrice,
-            @Parameter(description = "Lista de servicios requeridos", example = "[\"WiFi\", \"Piscina\"]")
-            @RequestParam(required = false) List<String> services,
-            @Parameter(description = "Parámetros de paginación (page, size, sort)", example = "page=0&size=10&sort=pricePerNight,asc")
-            Pageable pageable) {
-
-        Page<AccommodationFoundDTO> result = accommodationService.search(generateCriteria(cityName,
-                startDate, endDate, guests, minPrice, maxPrice, services), pageable);
-        return ResponseEntity.ok(result);
-    }
 
 
 
@@ -496,6 +434,14 @@ public class AccommodationController {
         return ResponseEntity.ok(result);
     }
 
+
+
+
+
+
+
+
+
     @GetMapping("/{accommodationId}")
     @Operation(
             summary = "Obtener un alojamiento por ID",
@@ -522,6 +468,72 @@ public class AccommodationController {
         return result.map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
     }
+
+
+
+    @GetMapping("/search")
+    @Operation(
+            summary = "Buscar alojamientos",
+            description = "Busca alojamientos según criterios de búsqueda. Este endpoint es público y no requiere autenticación. Soporta paginación y filtros por nombre de ciudad (búsqueda parcial), fechas, número de huéspedes, rango de precios y servicios."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Búsqueda realizada exitosamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Page.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Parámetros de búsqueda inválidos",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseErrorDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno al realizar la búsqueda",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseErrorDTO.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                        "code": 500,
+                                        "message": "Error al buscar alojamientos",
+                                        "details": {
+                                            "detalle": "Error en la consulta a la base de datos"
+                                        }
+                                    }
+                                    """)
+                    )
+            )
+    })
+    public ResponseEntity<Page<AccommodationFoundDTO>> search(
+            @Parameter(description = "Nombre de la ciudad (búsqueda parcial, no sensible a mayúsculas)", example = "Bogotá")
+            @RequestParam(required = false) String cityName,
+            @Parameter(description = "Fecha de inicio (formato: YYYY-MM-DD)", example = "2025-01-15")
+            @RequestParam(required = false) String startDate,
+            @Parameter(description = "Fecha de fin (formato: YYYY-MM-DD)", example = "2025-01-20")
+            @RequestParam(required = false) String endDate,
+            @Parameter(description = "Número de huéspedes", example = "2")
+            @RequestParam(required = false) Integer guests,
+            @Parameter(description = "Precio mínimo por noche", example = "50.00")
+            @RequestParam(required = false) BigDecimal minPrice,
+            @Parameter(description = "Precio máximo por noche", example = "200.00")
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @Parameter(description = "Lista de servicios requeridos", example = "[\"WiFi\", \"Piscina\"]")
+            @RequestParam(required = false) List<String> services,
+            @Parameter(description = "Parámetros de paginación (page, size, sort)", example = "page=0&size=10&sort=pricePerNight,asc")
+            Pageable pageable) {
+
+        Page<AccommodationFoundDTO> result = accommodationService.search(generateCriteria(cityName,
+                startDate, endDate, guests, minPrice, maxPrice, services), pageable);
+        return ResponseEntity.ok(result);
+    }
+
 
     @GetMapping("/services")
     @Operation(
