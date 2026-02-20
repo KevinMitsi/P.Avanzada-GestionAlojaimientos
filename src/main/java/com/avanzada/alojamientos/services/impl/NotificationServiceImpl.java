@@ -43,10 +43,10 @@ public class NotificationServiceImpl implements EmailNotificationService {
     @Value("${SMTP_PORT:587}")
     private int smtpPort;
 
-    @Value("${SMTP_USERNAME:kegarrapala.2003@gmail.com}")
+    @Value("${SMTP_USERNAME}")
     private String smtpUsername;
 
-    @Value("${SMTP_PASSWORD:zoih yqyq fjja tosn}")
+    @Value("${SMTP_PASSWORD}")
     private String smtpPassword;
 
     @Override
